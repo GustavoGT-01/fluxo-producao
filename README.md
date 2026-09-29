@@ -30,7 +30,7 @@ Windows: use **PowerShell** ou Git Bash. Neste README, comandos longos usam `;` 
 ## Clonar e instalar
 
 ```bash
-git clone https://github.com/gtbr01/fluxo-producao.git
+git clone https://github.com/GustavoGT-01/fluxo-producao.git
 cd fluxo-producao
 pnpm install
 ```
