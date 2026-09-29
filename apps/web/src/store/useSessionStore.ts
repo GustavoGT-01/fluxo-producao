@@ -21,7 +21,7 @@ interface SessionState {
   user: SessionUser | null;
   restore: () => Promise<void>;
   enter: (user: SessionUser) => Promise<void>;
-  loginAsManager: (email: string, password: string) => Promise<void>;
+  loginAsManager: (email: string, password: string, remember?: boolean) => Promise<void>;
   loginAsOperator: (sectorId: string, pin: string) => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -70,8 +70,8 @@ export const useSessionStore = create<SessionState>((set) => ({
     await applyUser(user);
     set({ status: 'in', user });
   },
-  loginAsManager: async (email, password) => {
-    const { user } = await loginManager(email, password);
+  loginAsManager: async (email, password, remember) => {
+    const { user } = await loginManager(email, password, remember);
     await applyUser(user);
     set({ status: 'in', user });
   },

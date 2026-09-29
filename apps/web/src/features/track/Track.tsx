@@ -1,6 +1,6 @@
 import { topoSort } from '@/domain';
 import type { Order, Sector, Status } from '@/domain/types';
-import { selectIndependentSectors } from '@/store/selectors';
+import { selectIndependentSectors, selectTrackOrders } from '@/store/selectors';
 import { useGraphStore } from '@/store/useGraphStore';
 import { useOrdersStore } from '@/store/useOrdersStore';
 import { useUiStore } from '@/store/useUiStore';
@@ -28,8 +28,10 @@ function sortedSectors(sectors: Sector[]): Sector[] {
 export function Track() {
   const sectors = useGraphStore((s) => s.sectors);
   const orders = useOrdersStore((s) => s.orders);
-  const sectorId = useUiStore((s) => s.filters.sectorId);
+  const filters = useUiStore((s) => s.filters);
   const setSector = useUiStore((s) => s.setSector);
+  const sectorId = filters.sectorId;
+  const scoped = selectTrackOrders(orders, filters, sectors);
   const ordered = sortedSectors(sectors);
   const independents = selectIndependentSectors(sectors);
 
@@ -37,7 +39,7 @@ export function Track() {
     <section className={`${styles.track} track`} aria-label="Linha de produção">
       <div className={styles.trackIn}>
         {ordered.map((sec, i) => {
-          const list = ordersInSector(orders, sec.id);
+          const list = ordersInSector(scoped, sec.id);
           const run = list.filter((o) => o.progressBySector[sec.id]?.status === 'run').length;
           const pause = list.filter((o) => o.progressBySector[sec.id]?.status === 'pause').length;
           const stop = list.filter((o) => o.progressBySector[sec.id]?.status === 'stop').length;
@@ -63,7 +65,12 @@ export function Track() {
               className={nodeClass}
               onClick={() => setSector(selected ? null : sec.id)}
               aria-pressed={selected}
-              aria-label={`${sec.name}, ${list.length} ordens`}
+              aria-label={`${sec.name}, ${list.length} ordens${selected ? ', filtro ativo' : ''}`}
+              title={
+                selected
+                  ? 'Clique para limpar o filtro deste setor'
+                  : `Filtrar por ${sec.name}`
+              }
             >
               <span className={`${styles.orb} orb`}>{sec.icon}</span>
               <b>{sec.name}</b>
@@ -86,7 +93,7 @@ export function Track() {
           );
         })}
       </div>
-      <div className={styles.legend}>
+      <div className={`${styles.legend} legend`}>
         <span>
           <i className={styles.swatchFlow} />
           Fluxo ativo
@@ -103,7 +110,11 @@ export function Track() {
           {independents.length} setor{independents.length === 1 ? '' : 'es'} independente
           {independents.length === 1 ? '' : 's'}
         </span>
-        <span>Clique em um setor para filtrar</span>
+        <span>
+          {sectorId
+            ? 'Setor filtrando a lista/fluxo — clique de novo para limpar'
+            : 'Clique em um setor para filtrar'}
+        </span>
       </div>
     </section>
   );

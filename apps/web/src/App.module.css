@@ -8,9 +8,87 @@
   color: var(--ink);
 }
 
+.flowList {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.flowCol,
+.listCol {
+  min-width: 0;
+}
+
 @media (min-width: 900px) {
   .page {
     gap: 20px;
     padding: 20px 24px;
+  }
+}
+
+/* Lista ao lado do fluxo: trilho vira coluna à esquerda */
+@media (min-width: 1280px) {
+  .flowList {
+    display: grid;
+    grid-template-columns: minmax(220px, 260px) minmax(0, 1fr);
+    gap: 16px;
+    align-items: start;
+  }
+
+  .flowCol {
+    position: sticky;
+    top: 12px;
+    max-height: calc(100dvh - 24px);
+    overflow: auto;
+  }
+
+  .flowCol :global(.track) {
+    margin-bottom: 0;
+    padding: 16px 12px;
+    overflow-x: visible;
+  }
+
+  .flowCol :global(.track) > div:first-child {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    gap: 0;
+  }
+
+  .flowCol :global(.node) {
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 10px;
+    padding: 8px 4px;
+    text-align: left;
+    width: 100%;
+  }
+
+  .flowCol :global(.node) b {
+    min-height: 0;
+    flex: 1;
+    justify-content: flex-start;
+  }
+
+  .flowCol :global(.orb) {
+    width: 36px;
+    height: 36px;
+    font-size: 18px;
+    flex: 0 0 auto;
+  }
+
+  .flowCol :global(.conn) {
+    display: none;
+  }
+
+  .flowCol :global(.legend) {
+    flex-direction: column;
+    gap: 8px;
+    padding-top: 10px;
+  }
+
+  .listCol {
+    min-height: 420px;
   }
 }

@@ -33,6 +33,13 @@
   font-weight: 700;
 }
 
+.contextNote {
+  margin: -8px 0 12px;
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 600;
+}
+
 @media (max-width: 1024px) {
   .kpis {
     gap: 8px;

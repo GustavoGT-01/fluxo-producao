@@ -53,6 +53,7 @@ import { readToken, signToken } from './token';
 
 const COOKIE = 'fluxo_session';
 const TTL_MS = 12 * 60 * 60 * 1000;
+const REMEMBER_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 const STALE_MS = 15 * 60 * 1000;
 
 function secret(): string {
@@ -160,6 +161,7 @@ export async function buildApp() {
             kind: z.literal('manager'),
             email: z.string().email(),
             password: z.string().min(1),
+            remember: z.boolean().optional(),
           }),
           z.object({
             kind: z.literal('operator'),
@@ -175,29 +177,42 @@ export async function buildApp() {
       let user: UserRecord | null = null;
       if (body.data.kind === 'manager') {
         const found = findUserByEmail(body.data.email.toLowerCase());
-        if (!found?.passwordHash || !verifySecret(body.data.password, found.passwordHash)) {
+        if (
+          !found ||
+          found.role !== 'manager' ||
+          !found.passwordHash ||
+          !verifySecret(body.data.password, found.passwordHash)
+        ) {
           return reply.code(401).send({ error: 'E-mail ou senha incorretos' });
         }
         user = found;
       } else {
         const found = findOperator(body.data.sectorId);
-        if (!found?.pinHash || !verifySecret(body.data.pin, found.pinHash)) {
+        if (
+          !found ||
+          found.role !== 'operator' ||
+          !found.pinHash ||
+          !verifySecret(body.data.pin, found.pinHash)
+        ) {
           return reply.code(401).send({ error: 'PIN incorreto para este setor' });
         }
         user = found;
       }
 
+      const sessionTtl =
+        body.data.kind === 'manager' && body.data.remember ? REMEMBER_TTL_MS : TTL_MS;
       const token = signToken(
         { sub: user.id, role: user.role, sectorId: user.sectorId, name: user.name },
         secret(),
-        TTL_MS,
+        sessionTtl,
       );
+
       reply.setCookie(COOKIE, token, {
         httpOnly: true,
         sameSite: 'lax',
         path: '/',
         secure: process.env.NODE_ENV === 'production',
-        maxAge: TTL_MS / 1000,
+        maxAge: sessionTtl / 1000,
       });
       addFeed(user.id, `${user.name} entrou`);
       return { user: publicUser(user) };

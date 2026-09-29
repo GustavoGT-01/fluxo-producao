@@ -90,10 +90,22 @@ export default function App() {
       ) : (
         <>
           <Kpis />
-          <Track />
-          {view === 'board' ? <Board /> : null}
-          {view === 'list' ? <OrdersTable /> : null}
-          {view === 'diag' ? <DiagramView /> : null}
+          {view === 'list' ? (
+            <div className={styles.flowList}>
+              <div className={styles.flowCol}>
+                <Track />
+              </div>
+              <div className={styles.listCol}>
+                <OrdersTable />
+              </div>
+            </div>
+          ) : (
+            <>
+              <Track />
+              {view === 'board' ? <Board /> : null}
+              {view === 'diag' ? <DiagramView /> : null}
+            </>
+          )}
           <ActivityFeed />
         </>
       )}

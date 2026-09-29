@@ -6,6 +6,7 @@ import { useOrdersStore } from '@/store/useOrdersStore';
 import { useSessionStore } from '@/store/useSessionStore';
 import { useUiStore, type UiTheme } from '@/store/useUiStore';
 import { Filters } from './Filters';
+import { Icon } from './icons';
 import styles from './Header.module.css';
 
 const THEME_CYCLE: UiTheme[] = [null, 'light', 'dark'];
@@ -40,20 +41,20 @@ export function Header() {
 
   useEffect(() => {
     if (user?.role !== 'manager') return;
-    let live = true;
+    let alive = true;
     const load = () => {
       void fetchUsers()
         .then((data) => {
-          if (live) setStaff(data.users);
+          if (alive) setStaff(data.users);
         })
         .catch(() => {
-          if (live) setStaff([]);
+          if (alive) setStaff([]);
         });
     };
     load();
     window.addEventListener('fluxo:users-changed', load);
     return () => {
-      live = false;
+      alive = false;
       window.removeEventListener('fluxo:users-changed', load);
     };
   }, [user?.role]);
@@ -101,6 +102,7 @@ export function Header() {
   const operators = staff.filter((item) => item.role === 'operator' && item.active && item.sectorId);
   const managing = user?.role === 'manager' && !lens;
   const themeKey = theme === null ? 'null' : theme;
+  const roleLabel = user?.role === 'manager' ? 'Gerência' : 'Operador';
   const sub =
     role === 'manager'
       ? 'Acompanhe cada ordem do CNC até a finalização, em tempo real.'
@@ -108,77 +110,102 @@ export function Header() {
 
   return (
     <>
-      <header className={styles.top}>
-        <div>
-          <h1 className={styles.title}>Fluxo de Produção</h1>
-          <p className={styles.sub}>{sub}</p>
-        </div>
-        <div className={styles.acts}>
-          <span className={styles.who}>
-            {user?.name ?? 'Sessão'}
-            <small>{user?.role === 'manager' ? 'Gerência' : 'Operador'}</small>
+      <header className={styles.hdr}>
+        <div className={styles.row}>
+          <div className={styles.brand}>
+            <h1>Fluxo de Produção</h1>
+            <p>{sub}</p>
+          </div>
+          <span className={`${styles.ctrl} ${styles.who}`} title={user?.name ?? 'Sessão'}>
+            <Icon name="user" />
+            <b>{roleLabel}</b>
           </span>
           {managing ? (
             <>
-              <Button onClick={() => window.dispatchEvent(new CustomEvent('fluxo:open-users'))}>
-                Usuários
-              </Button>
-              <Button onClick={() => window.dispatchEvent(new CustomEvent('fluxo:open-chrono'))}>
-                Cronoanálise
-              </Button>
-              <select
-                className={styles.speed}
-                aria-label="Abrir posto de operador"
-                value=""
-                onChange={(event) => {
-                  if (event.target.value) openStation(event.target.value);
-                }}
+              <button
+                type="button"
+                className={styles.ctrl}
+                title="Usuários"
+                onClick={() => window.dispatchEvent(new CustomEvent('fluxo:open-users'))}
               >
-                <option value="">Abrir posto…</option>
-                {operators.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.name}
-                  </option>
-                ))}
-              </select>
+                <Icon name="users" />
+                <span className={styles.hideS}>Usuários</span>
+              </button>
+              <button
+                type="button"
+                className={styles.ctrl}
+                title="Cronoanálise"
+                onClick={() => window.dispatchEvent(new CustomEvent('fluxo:open-chrono'))}
+              >
+                <Icon name="timer" />
+                <span className={styles.hideS}>Cronoanálise</span>
+              </button>
+              <label className={`${styles.ctrl} ${styles.field}`}>
+                <Icon name="pin" />
+                <select
+                  aria-label="Abrir posto"
+                  value=""
+                  onChange={(event) => {
+                    if (event.target.value) openStation(event.target.value);
+                  }}
+                >
+                  <option value="">Abrir posto…</option>
+                  {operators.map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {item.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
             </>
           ) : null}
-          <Button variant="ghost" onClick={() => void logout()}>
-            Sair
-          </Button>
-          <Button
-            className={`${styles.bell} bell${ring ? ' ring' : ''}`}
-            aria-label="Paradas e alertas"
-            onClick={() =>
-              window.dispatchEvent(new CustomEvent('fluxo:open-pauses'))
-            }
-          >
-            🔔 Paradas
-            {newCount > 0 ? <b className={styles.badge}>{newCount}</b> : null}
-          </Button>
+          <span className={styles.sep} aria-hidden />
           <button
             type="button"
-            className={`${styles.live} live${live ? '' : ' off'}`}
+            className={`${styles.ctrl} ${styles.ic} ${styles.bell} bell${ring ? ' ring' : ''}`}
+            title="Paradas"
+            aria-label="Paradas"
+            onClick={() => window.dispatchEvent(new CustomEvent('fluxo:open-pauses'))}
+          >
+            <Icon name="bell" />
+            {newCount > 0 ? <em>{newCount}</em> : null}
+          </button>
+          <button
+            type="button"
+            className={`${styles.ctrl} ${styles.live} live${live ? '' : ' off'}`}
             aria-pressed={live}
+            title="Alternar ao vivo"
             onClick={toggleLive}
           >
             <i aria-hidden />
-            <span>Ao vivo</span>
+            Ao vivo
           </button>
-          <select
-            className={styles.speed}
-            aria-label="Velocidade da simulação"
-            value={String(speed)}
-            onChange={(e) => setSpeed(Number(e.target.value))}
+          <label className={`${styles.ctrl} ${styles.field}`} title="Velocidade da simulação">
+            <Icon name="gauge" />
+            <select
+              aria-label="Velocidade"
+              value={String(speed)}
+              onChange={(e) => setSpeed(Number(e.target.value))}
+            >
+              <option value="1">1x</option>
+              <option value="2">2x</option>
+              <option value="4">4x</option>
+            </select>
+          </label>
+          <button
+            type="button"
+            className={`${styles.ctrl} ${styles.ic}`}
+            title={`Tema: ${THEME_LABEL[themeKey]}`}
+            aria-label="Alternar tema"
+            onClick={cycleTheme}
           >
-            <option value="1">Velocidade 1x</option>
-            <option value="2">Velocidade 2x</option>
-            <option value="4">Velocidade 4x</option>
-          </select>
-          <Button onClick={cycleTheme} aria-label="Alternar tema">
-            ◐ {THEME_LABEL[themeKey]}
-          </Button>
+            <Icon name="half" />
+          </button>
+          <button type="button" className={`${styles.ctrl} ${styles.ic}`} title="Sair" aria-label="Sair" onClick={() => void logout()}>
+            <Icon name="out" />
+          </button>
         </div>
+        {role === 'manager' ? <Filters /> : null}
       </header>
       {user?.role === 'manager' && lens ? (
         <div className={styles.lens}>
@@ -190,7 +217,6 @@ export function Header() {
           </Button>
         </div>
       ) : null}
-      {role === 'manager' ? <Filters /> : null}
     </>
   );
 }

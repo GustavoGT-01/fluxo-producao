@@ -50,6 +50,7 @@ interface UiState {
   setQuery: (query: string) => void;
   setUrgentOnly: (urgentOnly: boolean) => void;
   setSector: (sectorId: string | null) => void;
+  clearFilters: () => void;
   setOperatorLens: (lens: OperatorLens | null) => void;
   openOrder: (orderId: string) => void;
   closeOrder: () => void;
@@ -99,6 +100,17 @@ export const useUiStore = create<UiState>()(
       setQuery: (query) => set((s) => ({ filters: { ...s.filters, query } })),
       setUrgentOnly: (urgentOnly) => set((s) => ({ filters: { ...s.filters, urgentOnly } })),
       setSector: (sectorId) => set((s) => ({ filters: { ...s.filters, sectorId } })),
+      clearFilters: () =>
+        set((s) => ({
+          filters: {
+            ...s.filters,
+            statuses: [],
+            batch: '',
+            query: '',
+            urgentOnly: false,
+            sectorId: null,
+          },
+        })),
       setOperatorLens: (operatorLens) => set({ operatorLens }),
       openOrder: (orderId) => set({ openOrderId: orderId }),
       closeOrder: () => set({ openOrderId: null }),

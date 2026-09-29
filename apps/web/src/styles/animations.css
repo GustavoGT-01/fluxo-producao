@@ -18,6 +18,14 @@
    drop            alerta "caindo" na tela                 .alert
    slidein         item novo no feed                       .feed li
    pop             modal abrindo                           .mbox
+   login-rise      painel de login entrando                .loginShell
+   login-shake     erro no botão de entrar                 .loginGo.shake
+   login-spin      carregando login                        .loginGo .spin
+   login-float     orbs do fundo (só tela de login)        .loginOrb
+   login-dash      linhas SVG do fundo (login)             .loginPulse
+   login-chain     nós da cadeia lateral (login)           .loginChainNode
+   sc-stripes      chip de setor em produção (lista)       .sc.cur.run
+   sc-flash        chip de setor interrompido (lista)      .sc.cur.stop
    ========================================================================== */
 
 /* Pulso do indicador "Ao vivo" — pseudo-elemento que escala e some (sem box-shadow) */
@@ -90,4 +98,45 @@
 /* Modal abrindo */
 @keyframes pop {
   from { opacity: 0; transform: scale(.96); }
+}
+
+/* Tela de login — entrada do cartão */
+@keyframes login-rise {
+  from { opacity: 0; transform: translateY(18px) scale(.98); }
+  to   { opacity: 1; transform: none; }
+}
+
+@keyframes login-shake {
+  20%, 60% { transform: translateX(-7px); }
+  40%, 80% { transform: translateX(7px); }
+}
+
+@keyframes login-spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes login-float {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50%      { transform: translate(30px, -24px) scale(1.08); }
+}
+
+@keyframes login-dash {
+  to { stroke-dashoffset: -160; }
+}
+
+@keyframes login-chain {
+  from { opacity: 0; transform: translateX(-6px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* Chip de setor em produção na lista (listras no fundo do chip) */
+@keyframes sc-stripes {
+  to { background-position: 10px 0; }
+}
+
+/* Chip de setor interrompido na lista */
+@keyframes sc-flash {
+  50% {
+    background: color-mix(in srgb, var(--stop) 30%, var(--surface));
+  }
 }

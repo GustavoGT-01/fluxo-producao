@@ -17,6 +17,9 @@ export {
   availableSectors,
   isOrderDone,
   filterOrders,
+  filterOrdersContext,
+  orderPrimaryStatus,
+  sectorMatches,
 } from './orders';
 
 export { countByStatus, computeBottlenecks, isPauseStale } from './metrics';

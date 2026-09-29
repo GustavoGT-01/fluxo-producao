@@ -133,6 +133,25 @@
   animation: stripes var(--dur-stripes) linear infinite;
 }
 
+/* Chip de setor em produção na lista */
+.sc.cur.run {
+  color: #fff;
+  background-image: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.4) 25%,
+    transparent 25% 50%,
+    rgba(255, 255, 255, 0.4) 50% 75%,
+    transparent 75%
+  );
+  background-size: 10px 10px;
+  background-color: color-mix(in srgb, var(--col) 60%, var(--surface));
+  animation: sc-stripes 0.9s linear infinite;
+}
+
+.sc.cur.stop {
+  animation: sc-flash 1.3s infinite;
+}
+
 /* Card interrompido: tint vermelho pulsando (overlay, sem repintar o fundo) */
 .card[data-s="stop"] {
   position: relative;
@@ -209,6 +228,12 @@
   .node.alert .orb::after { display: none; }
   .d-path.flow-active { stroke-dasharray: none; }     /* fio verde contínuo */
   .card[data-s="stop"]::after { opacity: .09; }       /* tint fixo */
+  .sc.cur.run {
+    animation: none !important;
+    background-image: none;
+    background-color: color-mix(in srgb, var(--col) 60%, var(--surface));
+  }
+  .sc.cur.stop { animation: none !important; }
 }
 
 :root[data-motion="off"] .live i::after { display: none; }
@@ -218,3 +243,78 @@
 :root[data-motion="off"] .node.alert .orb::after { display: none; }
 :root[data-motion="off"] .d-path.flow-active { stroke-dasharray: none; }
 :root[data-motion="off"] .card[data-s="stop"]::after { opacity: .09; }
+:root[data-motion="off"] .sc.cur.run {
+  animation: none !important;
+  background-image: none;
+  background-color: color-mix(in srgb, var(--col) 60%, var(--surface));
+}
+:root[data-motion="off"] .sc.cur.stop { animation: none !important; }
+
+/* -------- Tela de login (keyframes em animations.css) -------- */
+[data-login-shell] {
+  animation: login-rise 0.6s cubic-bezier(0.2, 0.85, 0.3, 1) both;
+}
+
+[data-login-orb] {
+  animation: login-float 16s ease-in-out infinite;
+}
+
+[data-login-orb='2'] {
+  animation-delay: -5s;
+}
+
+[data-login-orb='3'] {
+  animation-delay: -10s;
+}
+
+[data-login-pulse] {
+  animation: login-dash 3s linear infinite;
+}
+
+[data-login-pulse='run'] {
+  animation-delay: -1.4s;
+}
+
+[data-login-chain] {
+  animation: login-chain 0.45s both;
+}
+
+[data-login-shake] {
+  animation: login-shake 0.4s;
+}
+
+[data-login-spin] {
+  animation: login-spin 0.7s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-login-shell],
+  [data-login-orb],
+  [data-login-pulse],
+  [data-login-chain],
+  [data-login-shake],
+  [data-login-spin] {
+    animation: none !important;
+  }
+
+  [data-login-shell],
+  [data-login-chain] {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+:root[data-motion="off"] [data-login-shell],
+:root[data-motion="off"] [data-login-orb],
+:root[data-motion="off"] [data-login-pulse],
+:root[data-motion="off"] [data-login-chain],
+:root[data-motion="off"] [data-login-shake],
+:root[data-motion="off"] [data-login-spin] {
+  animation: none !important;
+}
+
+:root[data-motion="off"] [data-login-shell],
+:root[data-motion="off"] [data-login-chain] {
+  opacity: 1 !important;
+  transform: none !important;
+}

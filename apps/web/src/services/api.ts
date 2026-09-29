@@ -108,10 +108,14 @@ export function fetchOperatorSectors(): Promise<{
   return api('/api/auth/operator-sectors');
 }
 
-export function loginManager(email: string, password: string): Promise<{ user: SessionUser }> {
+export function loginManager(
+  email: string,
+  password: string,
+  remember?: boolean,
+): Promise<{ user: SessionUser }> {
   return api('/api/auth/login', {
     method: 'POST',
-    body: JSON.stringify({ kind: 'manager', email, password }),
+    body: JSON.stringify({ kind: 'manager', email, password, remember: remember === true }),
   });
 }
 

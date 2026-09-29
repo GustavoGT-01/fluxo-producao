@@ -78,4 +78,43 @@ describe('filterOrders', () => {
     const result = filterOrders(orders, { urgentOnly: true });
     expect(result.map((o) => o.id)).toEqual(['OP-A', 'OP-C']);
   });
+
+  it('busca inclui lote', () => {
+    const orders = [
+      order({ id: 'OP-A', batch: 'L-0928-A', progressBySector: {} }),
+      order({ id: 'OP-B', batch: 'L-0928-B', progressBySector: {} }),
+    ];
+    expect(filterOrders(orders, { query: '0928-b' }).map((o) => o.id)).toEqual(['OP-B']);
+  });
+
+  it('setor + status exige o status naquele setor', () => {
+    const cnc = sector('cnc');
+    const metal = sector('metalurgica', ['cnc']);
+    const orders = [
+      order({
+        id: 'OP-RUN-CNC',
+        progressBySector: { cnc: prog('cnc', 'run') },
+      }),
+      order({
+        id: 'OP-STOP-MET',
+        progressBySector: {
+          cnc: prog('cnc', 'done'),
+          metalurgica: prog('metalurgica', 'stop'),
+        },
+      }),
+    ];
+    const result = filterOrders(
+      orders,
+      { sectorId: 'cnc', status: ['stop'] },
+      [cnc, metal],
+    );
+    expect(result).toEqual([]);
+
+    const atCnc = filterOrders(
+      orders,
+      { sectorId: 'cnc', status: ['run'] },
+      [cnc, metal],
+    );
+    expect(atCnc.map((o) => o.id)).toEqual(['OP-RUN-CNC']);
+  });
 });
