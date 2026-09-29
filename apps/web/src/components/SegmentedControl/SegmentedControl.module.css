@@ -1,0 +1,22 @@
+.seg {
+  display: inline-flex;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  padding: 3px;
+}
+
+.option {
+  border: 0;
+  background: none;
+  border-radius: 8px;
+  padding: 5px 12px;
+  min-height: 32px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.option[aria-pressed='true'] {
+  background: var(--brand);
+  color: var(--brand-ink);
+}

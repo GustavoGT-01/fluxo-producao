@@ -1,0 +1,1102 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Fluxo de Produção em Lote</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700;800&family=Figtree:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  --bg:#EBEFF5; --surface:#FFFFFF; --surface2:#F4F6FA; --ink:#172037; --muted:#63708A; --line:#DCE2EC;
+  --brand:#2A4DE0; --brand-ink:#FFFFFF; --track:#132043; --track-line:#2B3B6B; --track-ink:#E8EDFF;
+  --run:#0E9F73; --wait:#6F7FA0; --pause:#D9950B; --stop:#DC3F4A; --done:#7357E6;
+  --shadow:0 1px 2px rgba(23,32,55,.06),0 6px 18px rgba(23,32,55,.05);
+  --font-h:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif; --font-b:"Figtree","Segoe UI",system-ui,sans-serif;
+  --grid-dot:rgba(255,255,255,.14);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0C1224; --surface:#151E38; --surface2:#1B2645; --ink:#E7ECFA; --muted:#93A0BF; --line:#263457;
+    --brand:#6C8BFF; --brand-ink:#0C1224;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0C1224; --surface:#151E38; --surface2:#1B2645; --ink:#E7ECFA; --muted:#93A0BF; --line:#263457;
+  --brand:#6C8BFF; --brand-ink:#0C1224;
+}
+:root[data-theme="dark"],:root:not([data-theme="light"]){ }
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-b);font-size:14px;line-height:1.45;min-height:100%}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+.wrap{max-width:1500px;margin:0 auto;padding:20px 20px 60px}
+
+/* header */
+.top{display:flex;flex-wrap:wrap;gap:14px;align-items:center;justify-content:space-between;margin-bottom:16px}
+.top h1{font-family:var(--font-h);font-size:28px;line-height:1.1;margin:0;letter-spacing:-.02em;font-weight:800}
+.top p{margin:4px 0 0;color:var(--muted)}
+.top .acts{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 13px;font-weight:600;display:inline-flex;gap:7px;align-items:center;transition:transform .12s,background .12s}
+.btn:hover{background:var(--surface2)} .btn:active{transform:scale(.97)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:var(--brand-ink)}
+.btn.primary:hover{filter:brightness(1.08);background:var(--brand)}
+.btn.danger{color:var(--stop);border-color:color-mix(in srgb,var(--stop) 40%,var(--line))}
+.btn.sm{padding:5px 10px;font-size:13px}
+.live{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:7px 12px;font-weight:600}
+.live i{width:9px;height:9px;border-radius:50%;background:var(--run);box-shadow:0 0 0 0 var(--run);animation:ping 1.6s infinite}
+.live.off i{background:var(--wait);animation:none}
+@keyframes ping{70%{box-shadow:0 0 0 8px transparent}100%{box-shadow:0 0 0 0 transparent}}
+select,input[type=search]{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 11px}
+
+/* kpis */
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:14px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px;text-align:left;box-shadow:var(--shadow);border-left:5px solid var(--c);transition:transform .15s,box-shadow .15s}
+.kpi:hover{transform:translateY(-2px)}
+.kpi[aria-pressed=true]{background:color-mix(in srgb,var(--c) 12%,var(--surface));outline:2px solid var(--c)}
+.kpi b{display:block;font-family:var(--font-h);font-size:30px;line-height:1;letter-spacing:-.02em}
+.kpi span{color:var(--muted);font-size:13px}
+
+/* live track */
+.track{background:var(--track);color:var(--track-ink);border-radius:20px;padding:22px 10px 16px;margin-bottom:14px;overflow-x:auto;box-shadow:var(--shadow)}
+.track-in{display:flex;min-width:1120px}
+.node{flex:1;position:relative;background:none;border:0;color:inherit;display:flex;flex-direction:column;align-items:center;gap:6px;padding:0 2px;text-align:center}
+.orb{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;font-size:22px;background:#1E2E5C;border:2px solid var(--track-line);position:relative;z-index:2;transition:transform .2s,border-color .2s,box-shadow .2s}
+.node:hover .orb{transform:scale(1.08)}
+.node.sel .orb{border-color:#fff;box-shadow:0 0 0 5px rgba(255,255,255,.16)}
+.node.active .orb{border-color:#3DDBA9}
+.node.alert .orb{border-color:#FF6B74;animation:alertpulse 1.4s infinite}
+@keyframes alertpulse{50%{box-shadow:0 0 0 8px rgba(255,107,116,.25)}}
+.node b{font-size:12.5px;font-weight:600;line-height:1.2;min-height:30px;display:flex;align-items:center}
+.node em{font-style:normal;font-family:var(--font-h);font-weight:700;font-size:13px;background:rgba(255,255,255,.1);border-radius:999px;padding:1px 10px}
+.conn{position:absolute;top:23px;left:calc(50% + 26px);width:calc(100% - 52px);height:3px;background:var(--track-line);border-radius:3px;z-index:1;overflow:hidden}
+.conn.flow{background:linear-gradient(90deg,#2B3B6B,#2B3B6B)}
+.conn.hold{background:repeating-linear-gradient(90deg,#D9950B 0 6px,transparent 6px 12px)}
+.conn .dot{position:absolute;top:-1px;left:-10px;width:14px;height:5px;border-radius:5px;background:linear-gradient(90deg,transparent,#3DDBA9);animation:travel 2.2s linear infinite;animation-delay:var(--d)}
+@keyframes travel{to{left:100%}}
+.legend{display:flex;gap:16px;flex-wrap:wrap;color:#AEB9DA;font-size:12px;padding:12px 12px 0}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px}
+
+/* filters */
+.filters{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+.filters input[type=search]{min-width:220px;flex:1;max-width:320px}
+.seg{display:inline-flex;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:3px}
+.seg button{border:0;background:none;border-radius:8px;padding:5px 12px;font-weight:600;color:var(--muted)}
+.seg button[aria-pressed=true]{background:var(--brand);color:var(--brand-ink)}
+.chk{display:inline-flex;align-items:center;gap:7px;padding:8px 11px;border:1px solid var(--line);border-radius:10px;background:var(--surface);font-weight:500;user-select:none}
+.spacer{flex:1}
+
+/* board */
+.board{display:flex;gap:12px;overflow-x:auto;padding-bottom:12px;align-items:flex-start}
+.col{flex:0 0 268px;background:var(--surface2);border:1px solid var(--line);border-radius:16px;padding:10px;max-height:640px;display:flex;flex-direction:column}
+.col.sel{outline:2px solid var(--brand)}
+.col h3{margin:2px 4px 10px;font-family:var(--font-h);font-size:15px;display:flex;align-items:center;gap:8px}
+.col h3 span.n{margin-left:auto;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:0 9px;font-size:12px}
+.col .list{overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding:2px}
+.empty{color:var(--muted);text-align:center;padding:18px 6px;border:1px dashed var(--line);border-radius:12px;font-size:13px}
+.card{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--c);border-radius:12px;padding:10px 11px;text-align:left;width:100%;box-shadow:var(--shadow);transition:transform .15s}
+.card:hover{transform:translateY(-2px)}
+.card .r1{display:flex;justify-content:space-between;gap:6px;font-size:12px;color:var(--muted)}
+.card .nm{font-weight:600;margin:3px 0 7px;line-height:1.25}
+.card .r2{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--muted);margin-top:7px}
+.bar{height:7px;border-radius:7px;background:var(--surface2);overflow:hidden;border:1px solid var(--line)}
+.bar span{display:block;height:100%;width:0;background:var(--c);border-radius:7px;transition:width .9s linear}
+.card[data-s=run] .bar span,.opcard[data-s=run] .bar span{background-image:linear-gradient(135deg,rgba(255,255,255,.35) 25%,transparent 25% 50%,rgba(255,255,255,.35) 50% 75%,transparent 75%);background-size:14px 14px;animation:stripes .8s linear infinite}
+@keyframes stripes{to{background-position:14px 0}}
+.card[data-s=stop]{animation:stopflash 2s infinite}
+@keyframes stopflash{50%{background:color-mix(in srgb,var(--stop) 9%,var(--surface))}}
+.pill{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:1px 9px;font-size:11.5px;font-weight:600;color:var(--c);background:color-mix(in srgb,var(--c) 14%,transparent)}
+.pill::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--c)}
+.urg{color:var(--stop);font-weight:700}
+[data-s=run]{--c:var(--run)}[data-s=wait]{--c:var(--wait)}[data-s=pause]{--c:var(--pause)}[data-s=stop]{--c:var(--stop)}[data-s=done]{--c:var(--done)}
+
+/* table */
+.tbl{background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:820px}
+th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--line)}
+th{font-size:12.5px;color:var(--muted);font-weight:600;background:var(--surface2)}
+tr.row{cursor:pointer} tr.row:hover td{background:var(--surface2)}
+td .bar{width:140px}
+
+/* feed */
+.feed{margin-top:16px;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px 16px}
+.feed h3{margin:0 0 8px;font-family:var(--font-h);font-size:16px}
+.feed ul{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.feed li{display:flex;gap:10px;align-items:baseline;animation:slidein .4s}
+.feed li time{color:var(--muted);font-size:12px;min-width:44px}
+.feed li.warn{color:var(--stop)} .feed li.ok{color:var(--run)}
+@keyframes slidein{from{opacity:0;transform:translateY(-6px)}}
+
+/* drawer + modal */
+.scrim{position:fixed;inset:0;background:rgba(8,12,26,.5);opacity:0;pointer-events:none;transition:opacity .2s;z-index:20}
+.scrim.on{opacity:1;pointer-events:auto}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(440px,100%);background:var(--surface);z-index:30;transform:translateX(102%);transition:transform .28s cubic-bezier(.2,.8,.2,1);padding:calc(20px + env(safe-area-inset-top,0px)) 20px calc(20px + env(safe-area-inset-bottom,0px));overflow-y:auto;border-left:1px solid var(--line);box-shadow:-10px 0 40px rgba(0,0,0,.2)}
+.drawer.on{transform:none}
+.drawer h2{font-family:var(--font-h);margin:6px 0 2px;font-size:22px;letter-spacing:-.01em}
+.drawer .x{position:absolute;right:14px;top:calc(12px + env(safe-area-inset-top,0px));width:34px;height:34px;padding:0;justify-content:center}
+.meta{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:14px 0}
+.meta div{background:var(--surface2);border-radius:10px;padding:8px 10px;font-size:12.5px;color:var(--muted)}
+.meta b{display:block;color:var(--ink);font-size:14px}
+.actions{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 4px}
+.reason{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;padding:10px;border:1px dashed var(--stop);border-radius:10px}
+.tl{list-style:none;margin:16px 0 0;padding:0}
+.tl li{position:relative;padding:0 0 14px 34px;color:var(--muted)}
+.tl li::before{content:"";position:absolute;left:10px;top:20px;bottom:-2px;width:2px;background:var(--line)}
+.tl li:last-child::before{display:none}
+.tl li i{position:absolute;left:0;top:0;width:22px;height:22px;border-radius:50%;background:var(--surface2);border:2px solid var(--line);display:grid;place-items:center;font-size:11px;font-style:normal}
+.tl li.done{color:var(--ink)} .tl li.done i{background:var(--run);border-color:var(--run);color:#fff}
+.tl li.done::before{background:var(--run)}
+.tl li.cur{color:var(--ink);font-weight:600} .tl li.cur i{border-color:var(--c);box-shadow:0 0 0 4px color-mix(in srgb,var(--c) 22%,transparent);background:var(--surface)}
+.tl small{display:block;font-weight:400;color:var(--muted)}
+.modal{position:fixed;inset:0;z-index:40;display:none;place-items:center;padding:16px}
+.modal.on{display:grid}
+.mbox{background:var(--surface);border-radius:20px;width:min(720px,100%);max-height:92vh;overflow:auto;padding:22px;box-shadow:0 30px 80px rgba(0,0,0,.35);animation:pop .25s}
+@keyframes pop{from{opacity:0;transform:scale(.96)}}
+.mbox h2{margin:0 0 4px;font-family:var(--font-h)}
+.drop{border:2px dashed var(--brand);border-radius:16px;padding:18px;display:flex;gap:14px;align-items:center;background:color-mix(in srgb,var(--brand) 7%,transparent);margin:14px 0}
+.drop .f{font-size:34px}
+.map{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 14px}
+.map span{background:var(--surface2);border:1px solid var(--line);border-radius:8px;padding:3px 9px;font-size:12.5px}
+.map span b{color:var(--run)}
+.toast{position:fixed;left:50%;bottom:calc(22px + env(safe-area-inset-bottom,0px));transform:translate(-50%,30px);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;opacity:0;transition:.25s;z-index:60;pointer-events:none}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+body[data-role=op] .only-ger,body:not([data-role=op]) .only-op{display:none!important}
+.bell{position:relative}
+.bell b{position:absolute;top:-8px;right:-8px;min-width:22px;height:22px;border-radius:11px;background:var(--stop);color:#fff;font-size:12px;display:grid;place-items:center;padding:0 6px}
+.bell b[hidden]{display:none}
+.bell.ring{animation:ring .7s}
+@keyframes ring{20%{transform:rotate(-12deg)}40%{transform:rotate(10deg)}60%{transform:rotate(-7deg)}80%{transform:rotate(4deg)}}
+.alerts{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));right:12px;z-index:50;display:grid;gap:10px;width:min(410px,calc(100% - 24px));pointer-events:none}
+.alert{pointer-events:auto;background:var(--surface);border:1px solid var(--pause);border-left:7px solid var(--pause);border-radius:14px;padding:12px 14px;box-shadow:0 14px 44px rgba(0,0,0,.3);animation:drop .35s cubic-bezier(.2,.9,.3,1.2)}
+@keyframes drop{from{opacity:0;transform:translateY(-18px) scale(.97)}}
+.alert h4{margin:0 0 8px;font-family:var(--font-h);font-size:16px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:3px 12px;font-size:13px;margin:0}
+.kv dt{color:var(--muted)} .kv dd{margin:0;font-weight:600}
+.acts2{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.pcard{border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:10px;background:var(--surface2)}
+.pcard.new{border-color:var(--pause);background:color-mix(in srgb,var(--pause) 9%,var(--surface))}
+.drawer h3.sec{font-family:var(--font-h);font-size:14px;margin:18px 0 6px}
+.hbar{display:grid;grid-template-columns:170px 1fr 24px;gap:8px;align-items:center;font-size:12.5px;margin:4px 0}
+.hbar i{display:block;height:8px;border-radius:8px;background:var(--pause)}
+.opwrap{max-width:860px;margin:0 auto}
+.ophead{background:var(--track);color:var(--track-ink);border-radius:20px;padding:18px 20px;margin-bottom:14px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.ophead h2{margin:0;font-family:var(--font-h);font-size:24px}
+.opstats{display:flex;gap:10px;margin-left:auto}
+.opstats div{background:rgba(255,255,255,.1);border-radius:12px;padding:8px 14px;text-align:center;font-size:12.5px}
+.opstats b{display:block;font-family:var(--font-h);font-size:22px}
+.opcard{background:var(--surface);border:1px solid var(--line);border-left:8px solid var(--c);border-radius:16px;padding:16px;margin-bottom:12px;box-shadow:var(--shadow)}
+.opcard h3{margin:8px 0 8px;font-family:var(--font-h);font-size:21px;line-height:1.2}
+.opcard .reason{display:block;margin-top:10px}
+.pieces{display:flex;align-items:center;gap:10px;margin:12px 0 0;flex-wrap:wrap}
+.pieces .btn{width:46px;height:46px;font-size:22px;padding:0;justify-content:center}
+.pieces b{font-family:var(--font-h);font-size:20px;min-width:84px;text-align:center}
+.bigbtns{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-top:14px}
+.bigbtn{min-height:58px;font-size:16px;justify-content:center;border-radius:14px;color:#fff}
+.bigbtn.go{background:var(--run);border-color:var(--run)}
+.bigbtn.pz{background:var(--pause);border-color:var(--pause)}
+.bigbtn.fin{background:var(--done);border-color:var(--done)}
+.bigbtn:hover:not(:disabled){filter:brightness(1.08)}
+.bigbtn:disabled{opacity:.3;cursor:not-allowed}
+.reasons{display:grid;gap:8px;margin:14px 0}
+.reasons label{display:flex;gap:10px;align-items:center;padding:12px;border:1px solid var(--line);border-radius:12px;font-weight:600;cursor:pointer}
+.reasons label:has(input:checked){border-color:var(--pause);background:color-mix(in srgb,var(--pause) 12%,transparent)}
+textarea{width:100%;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:9px;font:inherit;color:inherit;margin-top:6px}
+
+/* ========================================================
+   ESTILOS DO DIAGRAMA DE NÓS (EXCLUSIVO GERÊNCIA)
+   ======================================================== */
+.diagram-wrap{position:relative;background:#0B101E;border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);overflow:hidden;margin-bottom:14px}
+.diagram-bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;padding:12px 18px;border-bottom:1px solid #1E293B;background:#111827;color:#F8FAFC}
+.diagram-bar h3{margin:0;font-family:var(--font-h);font-size:16px;display:flex;align-items:center;gap:8px}
+.diagram-bar .info-tag{background:rgba(255,255,255,.1);color:#93C5FD;font-size:11.5px;padding:2px 8px;border-radius:6px;font-weight:600}
+.diagram-canvas{position:relative;width:100%;height:580px;overflow-x:auto;overflow-y:hidden;user-select:none;background-color:#080C16;background-image:radial-gradient(var(--grid-dot) 1.3px, transparent 1.3px);background-size:24px 24px}
+.canvas-inner{position:relative;width:1760px;height:100%;min-width:1760px}
+.diagram-svg{position:absolute;inset:0;width:1760px;height:100%;pointer-events:auto;z-index:2}
+.diagram-nodes{position:absolute;inset:0;width:1760px;height:100%;z-index:3;pointer-events:none}
+
+/* Estilo dos Nós conforme imagem de referência */
+.d-node{position:absolute;pointer-events:auto;min-width:185px;background:#111827;border:2px solid var(--nc);border-radius:12px;padding:10px 14px;box-shadow:0 8px 24px rgba(0,0,0,.5);color:#F3F4F6;cursor:move;transition:transform .12s,box-shadow .2s;touch-action:none}
+.d-node:hover{box-shadow:0 0 0 3px color-mix(in srgb,var(--nc) 35%,transparent),0 12px 30px rgba(0,0,0,.65)}
+.d-node.selected{box-shadow:0 0 0 4px var(--nc),0 16px 36px rgba(0,0,0,.7)}
+.d-node.independent{border-left-width:6px}
+.d-node-head{display:flex;justify-content:space-between;align-items:center;gap:6px;margin-bottom:4px}
+.d-node-title{font-family:var(--font-h);font-size:13.5px;font-weight:800;letter-spacing:.02em;text-transform:uppercase;color:#FFFFFF;display:flex;align-items:center;gap:6px}
+.d-node-meta{font-size:11.5px;color:#9CA3AF;display:flex;gap:6px;align-items:center;margin-top:2px}
+.d-node-badge{font-size:10px;padding:1px 6px;border-radius:4px;font-weight:700;letter-spacing:.02em;text-transform:uppercase}
+.d-node-badge.indep{background:rgba(16,185,129,.2);color:#34D399;border:1px solid rgba(16,185,129,.35)}
+.d-node-badge.dep{background:rgba(239,68,68,.18);color:#FCA5A5;border:1px solid rgba(239,68,68,.3)}
+.d-node-stats{margin-top:6px;font-size:11px;color:#CBD5E1;background:rgba(255,255,255,.05);padding:4px 7px;border-radius:6px;display:flex;justify-content:space-between}
+.d-node-cfg{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);color:#CBD5E1;padding:2px 6px;cursor:pointer;border-radius:6px;font-size:11px;transition:background .15s}
+.d-node-cfg:hover{color:#FFFFFF;background:rgba(255,255,255,.22);border-color:#38BDF8}
+
+/* Portas de Conexão com hit-target ampliado para toque */
+.d-port{position:absolute;width:14px;height:14px;border-radius:50%;background:#1E293B;border:2px solid #94A3B8;top:50%;transform:translateY(-50%);cursor:crosshair;pointer-events:auto;transition:transform .15s,background .15s,border-color .15s;z-index:4}
+.d-port::after{content:"";position:absolute;inset:-10px}
+.d-port:hover{transform:translateY(-50%) scale(1.4);background:var(--brand);border-color:#FFFFFF}
+.d-port.in{left:-8px}
+.d-port.out{right:-8px}
+.d-port.connecting{background:#10B981;border-color:#fff;animation:portpulse 1s infinite}
+@keyframes portpulse{50%{transform:translateY(-50%) scale(1.5);box-shadow:0 0 10px #10B981}}
+
+/* Curvas Bezier */
+.d-path{fill:none;stroke:#475569;stroke-width:2.2;transition:stroke .2s,stroke-width .2s;cursor:pointer}
+.d-path:hover{stroke:#38BDF8;stroke-width:3.5}
+.d-path.flow-active{stroke:#3DDBA9;stroke-dasharray:6,4;animation:wireflow .9s linear infinite}
+@keyframes wireflow{to{stroke-dashoffset:-20}}
+.diagram-legend{display:flex;flex-wrap:wrap;gap:16px;align-items:center;padding:10px 18px;background:#0F172A;border-top:1px solid #1E293B;font-size:12px;color:#94A3B8}
+.diagram-legend span{display:flex;align-items:center;gap:6px}
+.diagram-legend i.dot{display:inline-block;width:9px;height:9px;border-radius:50%}
+
+/* Scroll suave para touch */
+.track, .board, .tbl, .diagram-canvas {
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+
+/* ========================================================
+   RESPONSIVIDADE COMPLETA: TABLETS & SMARTPHONES
+   ======================================================== */
+@media (max-width: 1100px) {
+  .wrap{padding:16px 14px 50px}
+  .kpis{grid-template-columns:repeat(5,1fr);gap:8px}
+  .kpi{padding:10px 12px}
+  .kpi b{font-size:26px}
+  .diagram-canvas{height:520px}
+}
+
+@media (max-width: 900px) {
+  .top{gap:10px}
+  .top h1{font-size:23px}
+  .top .acts{width:100%;justify-content:flex-start}
+  .kpis{grid-template-columns:repeat(3,1fr);gap:8px}
+  .kpi:nth-child(4),.kpi:nth-child(5){grid-column:span 1}
+  .opstats{margin-left:0;width:100%}
+  .diagram-canvas{height:460px}
+  .diagram-bar{gap:8px}
+  .diagram-bar h3{font-size:15px}
+  .filters{gap:6px}
+  .filters input[type=search]{min-width:180px;max-width:none}
+}
+
+@media (max-width: 680px) {
+  .wrap{padding:12px 10px 40px}
+  .top h1{font-size:21px}
+  .top p{font-size:12.5px}
+  .acts{gap:6px}
+  .btn{padding:7px 11px;font-size:12.5px}
+  .live{padding:6px 10px;font-size:12.5px}
+  select,input[type=search]{padding:7px 9px;font-size:13px}
+  .kpis{grid-template-columns:repeat(2,1fr);gap:8px}
+  .kpi:last-child{grid-column:span 2}
+  .kpi b{font-size:24px}
+  .kpi span{font-size:12px}
+  .filters{flex-direction:column;align-items:stretch}
+  .filters input[type=search]{min-width:100%;max-width:100%;width:100%}
+  .filters .seg{width:100%;display:flex}
+  .filters .seg button{flex:1;text-align:center;padding:6px 4px}
+  .filters select{width:100%}
+  .filters .spacer{display:none}
+  .filters .btn.sm{flex:1;justify-content:center}
+  .col{flex:0 0 82vw;max-height:560px}
+  .diagram-bar{flex-direction:column;align-items:flex-start}
+  .diagram-bar div{width:100%;display:flex;flex-wrap:wrap;gap:6px}
+  .diagram-bar .btn.sm{flex:1;justify-content:center}
+  .diagram-canvas{height:410px}
+  .diagram-legend{font-size:11px;padding:8px 12px;gap:10px}
+  .drawer{width:100%;border-left:none}
+  .modal{padding:8px}
+  .mbox{padding:16px 14px;border-radius:16px;max-height:90vh}
+  .alerts{left:10px;right:10px;width:auto}
+  .toast{width:calc(100% - 24px);text-align:center;font-size:13px}
+  .opcard{padding:14px}
+  .opcard h3{font-size:19px}
+  .pieces .btn{width:48px;height:48px;font-size:24px}
+  .pieces b{font-size:18px}
+  .bigbtns{grid-template-columns:1fr;gap:8px}
+  .bigbtn{min-height:52px;font-size:15px}
+}
+
+@media (max-width: 420px) {
+  .top h1{font-size:19px}
+  .kpis{grid-template-columns:1fr 1fr}
+  .kpi b{font-size:22px}
+  .diagram-canvas{height:380px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Fluxo de produção</h1>
+      <p>Acompanhe cada ordem do CNC até a finalização, em tempo real.</p>
+    </div>
+    <div class="acts">
+      <div class="seg" role="group" aria-label="Perfil de acesso"><button id="roleGer" aria-pressed="true">Gerência</button><button id="roleOp" aria-pressed="false">Operador</button></div>
+      <select id="opSector" class="only-op" aria-label="Operador e setor"></select>
+      <button class="btn bell only-ger" id="bellBtn" aria-label="Paradas e alertas">🔔 Paradas<b id="badge" hidden>0</b></button>
+      <label class="chk only-ger"><input type="checkbox" id="sim" checked> Simular operadores</label>
+      <button class="live only-ger" id="liveBtn" aria-pressed="true"><i></i><span>Ao vivo</span></button>
+      <select id="speed" class="only-ger" aria-label="Velocidade da simulação"><option value="1">Velocidade 1x</option><option value="2">Velocidade 2x</option><option value="4">Velocidade 4x</option></select>
+      <button class="btn" id="themeBtn" aria-label="Alternar tema">◐ Tema</button>
+      <button class="btn primary only-ger" id="importBtn">＋ Importar planejamento</button>
+    </div>
+  </header>
+
+  <section class="kpis only-ger" id="kpis"></section>
+
+  <section class="track only-ger" aria-label="Linha de produção">
+    <div class="track-in" id="trackIn"></div>
+    <div class="legend"><span><i style="background:#3DDBA9"></i>Fluxo ativo</span><span><i style="background:#D9950B"></i>Somente pausadas</span><span><i style="background:#FF6B74"></i>Setor com interrupção</span><span>Clique em um setor para filtrar</span></div>
+  </section>
+
+  <section class="filters only-ger">
+    <input type="search" id="q" placeholder="Buscar produto, OP ou lote" aria-label="Buscar">
+    <select id="lote" aria-label="Lote"></select>
+    <label class="chk"><input type="checkbox" id="urg"> Somente urgentes</label>
+    <div class="seg" role="group" aria-label="Visualização">
+      <button id="vBoard" aria-pressed="true">Fluxo</button>
+      <button id="vList" aria-pressed="false">Lista</button>
+      <button id="vDiag" aria-pressed="false">Diagrama</button>
+    </div>
+    <button class="btn sm" id="clear">Limpar filtros</button>
+    <span class="spacer"></span>
+    <button class="btn sm" id="pauseVis">⏸ Pausar visíveis</button>
+    <button class="btn sm" id="resumeVis">▶ Retomar visíveis</button>
+  </section>
+
+  <!-- Visualizações Padrão (Fluxo / Lista) -->
+  <div id="view" class="only-ger"></div>
+
+  <!-- NOVO: Diagrama de Dependências entre Setores (Disponível apenas para a Gerência) -->
+  <section id="diagView" class="diagram-wrap only-ger" style="display:none">
+    <div class="diagram-bar">
+      <h3>
+        <span>Diagrama de Dependências da Linha</span>
+        <span class="info-tag">4 Setores Independentes · Grafo Direcionado</span>
+      </h3>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button class="btn sm" id="dbBtn" style="background:#1E293B;color:#93C5FD;border-color:#3B82F6">💾 Schema DB / API</button>
+        <button class="btn sm" id="connectHelpBtn">🔗 Como Conectar</button>
+        <button class="btn sm" id="resetLayoutBtn">↺ Redefinir Posições</button>
+      </div>
+    </div>
+    <div class="diagram-canvas" id="canvas">
+      <div class="canvas-inner" id="canvasInner">
+        <svg class="diagram-svg" id="diagramSvg">
+          <defs>
+            <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 1 L 9 5 L 0 9 z" fill="#64748B"/>
+            </marker>
+            <marker id="arrow-active" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 1 L 9 5 L 0 9 z" fill="#3DDBA9"/>
+            </marker>
+          </defs>
+          <g id="svgWires"></g>
+        </svg>
+        <div class="diagram-nodes" id="diagramNodes"></div>
+      </div>
+    </div>
+    <div class="diagram-legend">
+      <span><i class="dot" style="background:#10B981"></i> <b>Independentes:</b> CNC, Corte de tecido, Laminação, Marcenaria (Entrada livre)</span>
+      <span><i class="dot" style="background:#6366F1"></i> <b>Dependentes:</b> Dependem da conclusão das etapas anteriores</span>
+      <span style="margin-left:auto;color:#E2E8F0">💡 <i>Arraste para mover · Clique na porta da direita e depois na da esquerda para vincular</i></span>
+    </div>
+  </section>
+
+  <!-- Visão do Operador -->
+  <div id="opview" class="opwrap only-op"></div>
+
+  <!-- Feed de Atividades -->
+  <section class="feed only-ger"><h3>Atividade recente</h3><ul id="feed"></ul></section>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" aria-label="Detalhes da ordem"></aside>
+<aside class="drawer" id="notif" aria-label="Paradas e alertas"></aside>
+<div class="alerts" id="alerts" aria-live="assertive"></div>
+<div class="modal" id="modal"><div class="mbox" id="mbox"></div></div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+/* ========================================================
+   SETORES, DEPENDÊNCIAS E CONFIGURAÇÕES
+   ======================================================== */
+const STAGES=[
+ {id:'cnc',n:'CNC',i:'⚙️',color:'#3B82F6',indep:true,deps:[],x:40,y:45},
+ {id:'metalurgica',n:'Metalúrgica',i:'🔩',color:'#EC4899',indep:false,deps:['cnc'],x:290,y:60},
+ {id:'laminacao',n:'Laminação',i:'🪵',color:'#10B981',indep:true,deps:[],x:40,y:300},
+ {id:'marcenaria',n:'Marcenaria',i:'🪚',color:'#8B5CF6',indep:true,deps:[],x:40,y:430},
+ {id:'espumacao',n:'Espumação',i:'🧽',color:'#14B8A6',indep:false,deps:['laminacao','marcenaria'],x:290,y:330},
+ {id:'preparacao',n:'Preparação',i:'🛠️',color:'#06B6D4',indep:false,deps:['marcenaria','metalurgica'],x:540,y:125},
+ {id:'tapecaria',n:'Tapeçaria',i:'🧵',color:'#6366F1',indep:false,deps:['preparacao','espumacao','costura'],x:790,y:215},
+ {id:'corte',n:'Corte de tecido',i:'✂️',color:'#F59E0B',indep:true,deps:[],x:40,y:175},
+ {id:'costura',n:'Costura',i:'🪡',color:'#F43F5E',indep:false,deps:['corte'],x:290,y:190},
+ {id:'embalagem',n:'Embalagem',i:'📦',color:'#FB923C',indep:false,deps:['tapecaria'],x:1040,y:215},
+ {id:'cq',n:'Controle de qualidade',i:'✅',color:'#84CC16',indep:false,deps:['embalagem'],x:1280,y:215},
+ {id:'finalizado',n:'Finalizado',i:'🏁',color:'#22C55E',indep:false,deps:['cq'],x:1510,y:215}
+];
+
+// Carrega posições salvas
+const savedPos = localStorage.getItem('fluxo_stages_pos');
+if(savedPos){
+  try{
+    const p = JSON.parse(savedPos);
+    STAGES.forEach(s => { if(p[s.id]){ s.x = p[s.id].x; s.y = p[s.id].y; } });
+  }catch(e){}
+}
+const savedDeps = localStorage.getItem('fluxo_stages_deps');
+if(savedDeps){
+  try{
+    const d = JSON.parse(savedDeps);
+    STAGES.forEach(s => { if(d[s.id]) s.deps = d[s.id]; });
+  }catch(e){}
+}
+
+const LAST=STAGES.length-1;
+const ST={run:'Em produção',wait:'Aguardando',pause:'Pausada',stop:'Interrompida',done:'Finalizada'};
+const PRODS=['Sofá Milano 3 lugares','Poltrona Aurora','Cadeira Nordic','Cama Box Luna','Puff Cubo','Sofá Retrátil Atlas','Banqueta Bali','Recamier Siena','Sofá de canto Vitória','Cabeceira Olímpia','Poltrona Berlim','Namoradeira Lis','Sofá Buriti 2 lugares'];
+const LOTES=['L-0928-A','L-0928-B','L-0928-C'];
+const REASONS=['Falta de material','Quebra de máquina','Defeito de qualidade','Aguardando liberação da gerência','Troca de turno ou intervalo','Ajuste de planejamento'];
+const OPERATORS=['Carlos','Marina','João','Fernanda','Pedro','Luciana','Rafael','Aline','Sônia','Diego','Paula','Expedição'];
+const CLIENTES=['Móveis Aurora','Casa & Conforto','Lar Ideal','Estofados Sul','Decor Norte'];
+let seed=11;const rnd=()=>{seed=(seed*16807)%2147483647;return (seed-1)/2147483646};
+let items=[],feed=[],uid=4820;
+
+function mk(stage,status,lote,prod){
+  const it={id:'OP-'+(uid++),prod:prod||PRODS[Math.floor(rnd()*PRODS.length)],qty:[4,6,8,10,12,20][Math.floor(rnd()*6)],lote:lote||LOTES[Math.floor(rnd()*3)],
+   stage,prog:Math.floor(rnd()*90),status,urg:rnd()<.18,due:'0'+(1+Math.floor(rnd()*7))+'/10',mins:Math.floor(rnd()*50),hist:{},reason:'',by:'',pedido:'PED-'+(10420+Math.floor(rnd()*80)),cliente:CLIENTES[Math.floor(rnd()*CLIENTES.length)]};
+  for(let s=0;s<stage;s++)it.hist[s]=20+Math.floor(rnd()*70);
+  if(status==='stop'){it.reason=REASONS[Math.floor(rnd()*REASONS.length)];it.by='Gerência'}
+  if(status==='pause'){it.reason=REASONS[Math.floor(rnd()*REASONS.length)];it.by=OPERATORS[stage]+' · '+STAGES[stage].n}
+  if(status==='done'){it.prog=100}
+  return it;
+}
+for(let i=0;i<34;i++){
+  const stage=i<12?i:Math.floor(rnd()*12);
+  let s='run',r=rnd();
+  if(stage===LAST)s='done'; else if(r>.9)s='stop'; else if(r>.8)s='pause'; else if(r>.72)s='wait';
+  items.push(mk(stage,s));
+}
+const state={role:'ger',sim:true,opStage:0,nf:'new',pauseId:null,live:true,speed:1,view:'board',stat:new Set(),lote:'',q:'',urg:false,sector:null,open:null,reasonOpen:false,clock:new Date(2026,8,28,9,40),connectSource:null};
+const $=id=>document.getElementById(id);
+const fmt=d=>d.toTimeString().slice(0,5);
+function log(msg,kind=''){feed.unshift({t:fmt(state.clock),msg,kind});feed=feed.slice(0,8);renderFeed();}
+[['Lote L-0928-C liberado da CNC para a Metalúrgica',''],['OP-4823 aprovada no controle de qualidade','ok'],['Planejamento semanal importado com 34 ordens','']].forEach(e=>{feed.push({t:'08:0'+(feed.length+2),msg:e[0],kind:e[1]})});
+
+const esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const pauses=[];let pid=0;
+const opName=st=>OPERATORS[st]+' · '+STAGES[st].n;
+function registerPause(it,reason,obs,who,quiet,time){
+  const p={id:'P'+(++pid),op:it.id,pedido:it.pedido,cliente:it.cliente,prod:it.prod,qty:it.qty,stage:it.stage,reason,obs:obs||'',who,time:time||fmt(state.clock),st:quiet?'visto':'novo'};
+  pauses.unshift(p);
+  if(!quiet){log(`⏸ ${it.id} pausada em ${STAGES[it.stage].n}: ${reason} (${who})`,'warn');renderBell(true);if(state.role==='ger')showAlert(p)}
+  return p;
+}
+function renderBell(ring){
+  const n=pauses.filter(p=>p.st==='novo').length,b=$('badge');b.hidden=!n;b.textContent=n;
+  if(ring&&n){const bt=$('bellBtn');bt.classList.remove('ring');void bt.offsetWidth;bt.classList.add('ring')}
+}
+function showAlert(p){
+  const el=document.createElement('div');el.className='alert';el.dataset.p=p.id;el.setAttribute('role','alert');
+  el.innerHTML=`<h4><span>⏸ Ordem pausada</span><button class="btn sm" data-x aria-label="Fechar alerta">✕</button></h4><dl class="kv"><dt>OP</dt><dd>${p.op}</dd><dt>Pedido</dt><dd>${p.pedido} · ${p.cliente}</dd><dt>Produto</dt><dd>${p.prod} ×${p.qty}</dd><dt>Setor</dt><dd>${STAGES[p.stage].i} ${STAGES[p.stage].n}</dd><dt>Motivo</dt><dd>${esc(p.reason)}</dd>${p.obs?`<dt>Obs.</dt><dd>${esc(p.obs)}</dd>`:''}<dt>Quem</dt><dd>${esc(p.who)} às ${p.time}</dd></dl><div class="acts2"><button class="btn sm primary" data-view>Ver ordem</button><button class="btn sm" data-ack>Marcar como vista</button></div>`;
+  const box=$('alerts');box.prepend(el);while(box.children.length>3)box.lastChild.remove();
+  setTimeout(()=>el.remove(),25000);
+  if($('notif').classList.contains('on'))renderNotif();
+}
+function pcard(p){
+  const lab=p.st==='novo'?'Nova':p.st==='visto'?'Vista':'Tratada',cs=p.st==='novo'?'pause':p.st==='tratada'?'run':'wait';
+  return `<div class="pcard ${p.st==='novo'?'new':''}"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><b>${p.op} · ${p.pedido}</b><span class="pill" data-s="${cs}">${lab}</span></div>
+  <dl class="kv" style="margin-top:8px"><dt>Cliente</dt><dd>${p.cliente}</dd><dt>Produto</dt><dd>${p.prod} ×${p.qty}</dd><dt>Setor</dt><dd>${STAGES[p.stage].i} ${STAGES[p.stage].n}</dd><dt>Motivo</dt><dd>${esc(p.reason)}</dd><dt>Quem</dt><dd>${esc(p.who)}</dd><dt>Quando</dt><dd>${p.time}</dd>${p.obs?`<dt>Obs.</dt><dd>${esc(p.obs)}</dd>`:''}</dl>
+  <div class="acts2"><button class="btn sm" data-pv="${p.id}">Ver ordem</button>${p.st!=='tratada'?`<button class="btn sm primary" data-pt="${p.id}">Marcar como tratada</button>`:''}</div></div>`;
+}
+function renderNotif(){
+  const list=pauses.filter(p=>state.nf==='new'?p.st==='novo':true);
+  const tally=f=>{const o={};pauses.forEach(p=>{const k=f(p);o[k]=(o[k]||0)+1});return Object.entries(o).sort((a,b)=>b[1]-a[1]).slice(0,4)};
+  const bars=a=>{const m=a.length?a[0][1]:1;return a.map(([n,c])=>`<div class="hbar"><span>${esc(n)}</span><i style="width:${c/m*100}%"></i><b>${c}</b></div>`).join('')};
+  const novas=pauses.filter(p=>p.st==='novo').length;
+  $('notif').innerHTML=`<button class="btn x" data-nx aria-label="Fechar">✕</button><h2>Paradas e alertas</h2><div style="color:var(--muted)">${pauses.length} registros hoje · ${novas} novos</div>
+  <h3 class="sec">Principais motivos</h3>${bars(tally(p=>p.reason))}<h3 class="sec">Setores com mais paradas</h3>${bars(tally(p=>STAGES[p.stage].n))}
+  <div class="seg" style="margin-top:18px"><button data-nf="new" aria-pressed="${state.nf==='new'}">Novas</button><button data-nf="all" aria-pressed="${state.nf==='all'}">Todas</button></div>
+  ${list.map(pcard).join('')||'<div class="empty" style="margin-top:12px">Nenhuma parada nova. Quando um operador pausar uma ordem, ela aparece aqui.</div>'}`;
+}
+function openNotif(){closeDrawer();state.nf=pauses.some(p=>p.st==='novo')?'new':'all';renderNotif();$('notif').classList.add('on');$('scrim').classList.add('on')}
+function closeNotif(){$('notif').classList.remove('on')}
+function closePanels(){closeDrawer();closeNotif()}
+function simFor(it){return state.sim||(state.role==='op'&&it.stage!==state.opStage)}
+
+function opCard(it){
+  const s=it.status,dn=Math.round(it.prog/100*it.qty);
+  return `<div class="opcard" data-s="${s}"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><span class="pill" data-s="${s}">${it.ready&&s==='run'?'Pronta para finalizar':ST[s]}</span>${it.urg?'<span class="urg">Urgente</span>':''}</div>
+  <h3>${it.prod} ×${it.qty}</h3>
+  <dl class="kv"><dt>OP</dt><dd>${it.id}</dd><dt>Pedido</dt><dd>${it.pedido} · ${it.cliente}</dd><dt>Lote</dt><dd>${it.lote}</dd><dt>Prazo</dt><dd>${it.due}/10</dd></dl>
+  ${s==='stop'?`<div class="reason">Interrompida pela gerência: ${esc(it.reason)}. Aguarde a liberação.</div>`:''}
+  ${s==='pause'?`<div class="reason" style="border-color:var(--pause)">Pausada: ${esc(it.reason)}</div>`:''}
+  <div class="bar" style="margin-top:12px"><span data-bar="${it.id}" style="width:${it.prog}%"></span></div>
+  <div class="pieces"><button class="btn" data-op="minus" data-id="${it.id}" ${s==='run'?'':'disabled'} aria-label="Remover uma peça">−</button><b><span data-pcs="${it.id}">${dn}</span> de ${it.qty}</b><button class="btn" data-op="plus" data-id="${it.id}" ${s==='run'?'':'disabled'} aria-label="Adicionar uma peça">＋</button><span style="color:var(--muted)">peças concluídas</span></div>
+  <div class="bigbtns"><button class="btn bigbtn go" data-op="start" data-id="${it.id}" ${s==='wait'||s==='pause'?'':'disabled'}>▶ Iniciar</button><button class="btn bigbtn pz" data-op="pause" data-id="${it.id}" ${s==='run'||s==='wait'?'':'disabled'}>⏸ Pausar</button><button class="btn bigbtn fin" data-op="fin" data-id="${it.id}" ${s==='run'?'':'disabled'}>✔ Finalizar</button></div></div>`;
+}
+function renderOperator(){
+  const st=state.opStage,sec=STAGES[st],ord={run:0,pause:1,wait:2,stop:3};
+  const mine=items.filter(i=>i.stage===st&&i.status!=='done').sort((a,b)=>(ord[a.status]-ord[b.status])||((b.urg?1:0)-(a.urg?1:0)));
+  const c=k=>mine.filter(i=>i.status===k).length,coming=items.filter(i=>i.stage===st-1&&i.status!=='done').length;
+  $('opview').innerHTML=`<div class="ophead"><span class="orb">${sec.i}</span><div><h2>Olá, ${OPERATORS[st]}</h2><div style="color:#AEB9DA">Setor ${sec.n} · ${coming} a caminho</div></div><div class="opstats"><div><b>${c('wait')}</b>Para iniciar</div><div><b>${c('run')}</b>Em andamento</div><div><b>${c('pause')}</b>Pausadas</div></div></div>${mine.map(opCard).join('')||'<div class="empty">Nenhuma ordem neste setor agora. Novas ordens aparecem aqui assim que chegarem.</div>'}`;
+}
+function openPauseModal(it){
+  state.pauseId=it.id;
+  $('mbox').innerHTML=`<h2>Registrar pausa</h2><div style="color:var(--muted)">${it.id} · ${it.prod} · ${it.pedido}</div><div class="reasons">${REASONS.map(r=>`<label><input type="radio" name="pr" value="${r}"> ${r}</label>`).join('')}</div><label for="pobs" style="font-weight:600">Observação (opcional)</label><textarea id="pobs" rows="3" placeholder="Ex.: faltam 4 espumas D33"></textarea><div class="actions" style="justify-content:flex-end;margin-top:14px"><button class="btn" data-m="cancel">Cancelar</button><button class="btn primary" data-m="pausecfm">Registrar pausa e avisar gerência</button></div>`;
+  $('modal').classList.add('on');
+}
+function confirmPause(){
+  const it=byId(state.pauseId),r=document.querySelector('input[name=pr]:checked');
+  if(!it)return;if(!r){toast('Escolha o motivo da pausa');return}
+  it.status='pause';it.reason=r.value;it.by=opName(it.stage);it.autoT=0;
+  registerPause(it,r.value,$('pobs').value.trim(),it.by);$('modal').classList.remove('on');toast('Pausa registrada. A gerência foi avisada.');renderAll();
+}
+function setRole(r){
+  state.role=r;document.body.dataset.role=r;$('roleGer').setAttribute('aria-pressed',r==='ger');$('roleOp').setAttribute('aria-pressed',r==='op');
+  closePanels();$('alerts').innerHTML='';
+  document.querySelector('.top p').textContent=r==='ger'?'Acompanhe cada ordem do CNC até a finalização, em tempo real.':'Registre início, pausa e finalização das ordens do seu setor.';
+  renderAll();
+}
+
+function vis(it,skipSector){
+  if(state.stat.size&&!state.stat.has(it.status))return false;
+  if(state.lote&&it.lote!==state.lote)return false;
+  if(state.urg&&!it.urg)return false;
+  if(!skipSector&&state.sector!==null&&it.stage!==state.sector)return false;
+  if(state.q){const q=state.q.toLowerCase();if(!(it.id+it.prod+it.lote).toLowerCase().includes(q))return false}
+  return true;
+}
+const byId=id=>items.find(i=>i.id===id);
+
+function renderKPIs(){
+  const base=items.filter(i=>(!state.lote||i.lote===state.lote));
+  const c=k=>base.filter(i=>i.status===k).length;
+  $('kpis').innerHTML=['run','wait','pause','stop','done'].map(k=>
+   `<button class="kpi" data-s="${k}" data-k="${k}" aria-pressed="${state.stat.has(k)}"><b>${c(k)}</b><span>${ST[k]}</span></button>`).join('');
+}
+function renderTrack(){
+  let h='';
+  STAGES.forEach((s,i)=>{
+    const list=items.filter(it=>it.stage===i&&vis(it,true));
+    const run=list.filter(x=>x.status==='run').length,pause=list.filter(x=>x.status==='pause').length,stop=list.filter(x=>x.status==='stop').length;
+    let conn='';
+    if(i<LAST){
+      const dots=Math.min(3,run);
+      conn=`<div class="conn ${run?'flow':pause&&!run?'hold':''}">${Array.from({length:dots},(_,k)=>`<i class="dot" style="--d:-${(k*.75).toFixed(2)}s"></i>`).join('')}</div>`;
+    }
+    h+=`<button class="node ${state.sector===i?'sel':''} ${run?'active':''} ${stop?'alert':''}" data-stage="${i}"><span class="orb">${s.i}</span><b>${s.n}</b><em>${list.length}</em>${conn}</button>`;
+  });
+  $('trackIn').innerHTML=h;
+}
+function card(it){
+  return `<button class="card" data-s="${it.status}" data-id="${it.id}">
+    <div class="r1"><span>${it.id} · ${it.lote}</span>${it.urg?'<span class="urg">Urgente</span>':''}</div>
+    <div class="nm">${it.prod} <span style="color:var(--muted);font-weight:400">×${it.qty}</span></div>
+    <div class="bar"><span data-bar="${it.id}" style="width:${it.prog}%"></span></div>
+    <div class="r2"><span class="pill" data-s="${it.status}">${ST[it.status]}</span><span data-since="${it.id}">${it.status==='done'?'Prazo '+it.due:it.status==='stop'||it.status==='pause'?esc(it.reason):it.ready?'Pronta para finalizar':Math.round(it.mins)+' min na etapa'}</span></div>
+  </button>`;
+}
+function renderBoard(){
+  $('view').innerHTML='<div class="board">'+STAGES.map((s,i)=>{
+    const list=items.filter(it=>it.stage===i&&vis(it));
+    const shown=i===LAST?list.slice(0,6):list;
+    return `<div class="col ${state.sector===i?'sel':''}"><h3><span>${s.i}</span>${s.n}<span class="n">${list.length}</span></h3><div class="list">${
+      shown.length?shown.map(card).join(''):'<div class="empty">Nenhuma ordem neste setor com os filtros atuais.</div>'}${
+      list.length>shown.length?`<div class="empty">+${list.length-shown.length} finalizadas</div>`:''}</div></div>`}).join('')+'</div>';
+}
+function renderTable(){
+  const rows=items.filter(vis);
+  $('view').innerHTML=`<div class="tbl"><table><thead><tr><th>OP</th><th>Produto</th><th>Lote</th><th>Setor atual</th><th>Progresso</th><th>Status</th><th>Prazo</th></tr></thead><tbody>${
+   rows.map(it=>`<tr class="row" data-id="${it.id}" data-s="${it.status}"><td><b>${it.id}</b>${it.urg?' <span class="urg">●</span>':''}</td><td>${it.prod} ×${it.qty}</td><td>${it.lote}</td><td>${STAGES[it.stage].i} ${STAGES[it.stage].n}</td><td><div class="bar"><span data-bar="${it.id}" style="width:${it.prog}%;background:var(--c)"></span></div></td><td><span class="pill" data-s="${it.status}">${ST[it.status]}</span></td><td>${it.due}</td></tr>`).join('')||'<tr><td colspan="7"><div class="empty">Nenhuma ordem encontrada. Limpe os filtros para ver todas.</div></td></tr>'}</tbody></table></div>`;
+}
+
+/* ========================================================
+   RENDERIZAÇÃO DO DIAGRAMA DE NÓS
+   ======================================================== */
+function renderDiagram(){
+  const nodesEl=$('diagramNodes'),svgWires=$('svgWires');
+  if(!nodesEl||!svgWires)return;
+
+  nodesEl.innerHTML=STAGES.map((s,i)=>{
+    const list=items.filter(it=>it.stage===i&&vis(it));
+    const isIndep=s.indep||!s.deps||s.deps.length===0;
+    const badge=isIndep?`<span class="d-node-badge indep">Independente</span>`:`<span class="d-node-badge dep">Deps: ${s.deps.length}</span>`;
+    return `
+      <div class="d-node ${isIndep?'independent':''}" id="dnode-${s.id}" data-id="${s.id}" data-stage="${i}" style="left:${s.x}px;top:${s.y}px;--nc:${s.color}">
+        ${!isIndep?`<div class="d-port in" data-port-in="${s.id}" title="Entrada de dependência"></div>`:''}
+        <div class="d-node-head">
+          <span class="d-node-title">${s.i} ${s.n}</span>
+          <div style="display:flex;align-items:center;gap:4px">
+            ${badge}
+            <button class="d-node-cfg" data-cfg="${s.id}" title="Configurar dependências">⚙️</button>
+          </div>
+        </div>
+        <div class="d-node-meta">
+          <span>Op.: ${OPERATORS[i]||'—'}</span>
+          <span>·</span>
+          <span>${list.length} ordens</span>
+        </div>
+        <div class="d-node-stats">
+          <span>Prod: <b>${list.filter(x=>x.status==='run').length}</b></span>
+          <span>Pausa: <b>${list.filter(x=>x.status==='pause').length}</b></span>
+          <span>Fila: <b>${list.filter(x=>x.status==='wait').length}</b></span>
+        </div>
+        <div class="d-port out" data-port-out="${s.id}" title="Conectar ao próximo setor"></div>
+      </div>
+    `;
+  }).join('');
+
+  drawWires();
+  bindDiagramDragging();
+}
+
+function getPortCoords(stageId,type){
+  const el=$(`dnode-${stageId}`);
+  if(!el)return {x:0,y:0};
+  const x=type==='out'?el.offsetLeft+el.offsetWidth:el.offsetLeft;
+  const y=el.offsetTop+(el.offsetHeight/2);
+  return {x,y};
+}
+
+function drawWires(){
+  const g=$('svgWires');if(!g)return;
+  let html='';
+  STAGES.forEach(target=>{
+    if(!target.deps||target.indep)return;
+    target.deps.forEach(srcId=>{
+      const src=STAGES.find(x=>x.id===srcId);
+      if(!src)return;
+      const p1=getPortCoords(src.id,'out'),p2=getPortCoords(target.id,'in');
+      const dx=Math.max(45,Math.abs(p2.x-p1.x)*0.45);
+      const d=`M ${p1.x} ${p1.y} C ${p1.x+dx} ${p1.y}, ${p2.x-dx} ${p2.y}, ${p2.x} ${p2.y}`;
+      const srcIdx=STAGES.findIndex(x=>x.id===src.id);
+      const hasFlow=items.some(i=>i.stage===srcIdx&&i.status==='run');
+      html+=`<g class="wire-group" data-from="${src.id}" data-to="${target.id}">
+        <path class="d-path ${hasFlow?'flow-active':''}" d="${d}" marker-end="url(${hasFlow?'#arrow-active':'#arrow'})"/>
+      </g>`;
+    });
+  });
+  g.innerHTML=html;
+}
+
+function bindDiagramDragging(){
+  document.querySelectorAll('.d-node').forEach(node=>{
+    node.onpointerdown=e=>{
+      if(e.target.classList.contains('d-port')||e.target.closest('button'))return;
+      const sId=node.dataset.id,s=STAGES.find(x=>x.id===sId);
+      if(!s)return;
+      const startX=e.clientX,startY=e.clientY,origX=s.x,origY=s.y;
+      try{node.setPointerCapture(e.pointerId);}catch(err){}
+      
+      const onMove=ev=>{
+        if(ev.pointerId!==e.pointerId)return;
+        s.x=Math.max(10,origX+(ev.clientX-startX));
+        s.y=Math.max(10,origY+(ev.clientY-startY));
+        node.style.left=s.x+'px';node.style.top=s.y+'px';
+        drawWires();
+      };
+      const onUp=ev=>{
+        if(ev.pointerId!==e.pointerId)return;
+        try{node.releasePointerCapture(ev.pointerId);}catch(err){}
+        node.removeEventListener('pointermove',onMove);
+        node.removeEventListener('pointerup',onUp);
+        node.removeEventListener('pointercancel',onUp);
+        const map={};STAGES.forEach(st=>map[st.id]={x:st.x,y:st.y});
+        localStorage.setItem('fluxo_stages_pos',JSON.stringify(map));
+      };
+      node.addEventListener('pointermove',onMove);
+      node.addEventListener('pointerup',onUp);
+      node.addEventListener('pointercancel',onUp);
+    };
+  });
+}
+
+function openSectorConfig(sectorId){
+  const sec=STAGES.find(s=>s.id===sectorId);
+  if(!sec)return;
+  const isIndep=sec.indep||!sec.deps||sec.deps.length===0;
+  const optionsHtml=STAGES.filter(s=>s.id!==sectorId).map(s=>`
+    <label style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--surface2);border-radius:8px;cursor:pointer;border:1px solid var(--line)">
+      <input type="checkbox" name="depOption" value="${s.id}" ${(sec.deps||[]).includes(s.id)?'checked':''}>
+      <span>${s.i} <b>${s.n}</b> <small style="color:var(--muted)">(${s.indep?'Independente':'Dependente'})</small></span>
+    </label>
+  `).join('');
+
+  $('mbox').innerHTML=`
+    <h2>Configurar Setor: ${sec.i} ${sec.n}</h2>
+    <p style="color:var(--muted)">Defina se este setor é de entrada independente ou quais etapas prévias devem ser concluídas antes dele.</p>
+    <div style="margin:16px 0;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--surface2)">
+      <label style="display:flex;align-items:center;gap:10px;font-weight:700;font-size:14.5px;cursor:pointer">
+        <input type="checkbox" id="cfgIndep" ${isIndep?'checked':''}>
+        <span>Setor Independente (Entrada livre, sem pré-requisitos)</span>
+      </label>
+      <div style="font-size:12px;color:var(--muted);margin-left:24px;margin-top:3px">
+        Setores independentes não dependem de outros (ex: CNC, Corte de tecido, Laminação, Marcenaria).
+      </div>
+    </div>
+    <div id="cfgDepsList" style="margin-top:14px;${isIndep?'opacity:0.35;pointer-events:none':''}">
+      <h4 style="margin:0 0 10px;font-family:var(--font-h)">Setores pré-requisitos para ${sec.n}:</h4>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px">
+        ${optionsHtml}
+      </div>
+    </div>
+    <div class="actions" style="justify-content:flex-end;margin-top:20px">
+      <button class="btn" id="cfgCancel">Cancelar</button>
+      <button class="btn primary" id="cfgSave">Salvar Configuração</button>
+    </div>
+  `;
+  $('modal').classList.add('on');
+
+  $('cfgIndep').onchange=e=>{
+    const list=$('cfgDepsList');
+    if(e.target.checked){list.style.opacity='0.35';list.style.pointerEvents='none';document.querySelectorAll('input[name=depOption]').forEach(cb=>cb.checked=false)}
+    else{list.style.opacity='1';list.style.pointerEvents='auto'}
+  };
+  $('cfgCancel').onclick=()=>$('modal').classList.remove('on');
+  $('cfgSave').onclick=()=>{
+    const indep=$('cfgIndep').checked;sec.indep=indep;
+    sec.deps=indep?[]:Array.from(document.querySelectorAll('input[name=depOption]:checked')).map(cb=>cb.value);
+    const map={};STAGES.forEach(st=>map[st.id]=st.deps);
+    localStorage.setItem('fluxo_stages_deps',JSON.stringify(map));
+    drawWires();renderDiagram();$('modal').classList.remove('on');
+    log(`⚙️ Dependências de ${sec.n} atualizadas: ${sec.indep?'Independente':'Depende de '+sec.deps.join(', ')}`,'ok');
+    toast(`Setor ${sec.n} atualizado com sucesso!`);
+  };
+}
+
+function openDbSchemaModal(){
+  const sql=`-- ============================================================
+-- SCHEMA SQL: TABELAS RELACIONAIS PARA O FLUXO INDUSTRIAL (DAG)
+-- Compatível com PostgreSQL / SQLite / Supabase / MySQL
+-- ============================================================
+
+-- 1. Setores de Produção
+CREATE TABLE sectors (
+    id VARCHAR(30) PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    icon VARCHAR(10),
+    color VARCHAR(20),
+    is_independent BOOLEAN DEFAULT FALSE,
+    coord_x INT DEFAULT 0,
+    coord_y INT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 2. Tabela de Dependências entre Setores (Grafo Direcionado)
+CREATE TABLE sector_dependencies (
+    id SERIAL PRIMARY KEY,
+    parent_sector_id VARCHAR(30) REFERENCES sectors(id) ON DELETE CASCADE,
+    dependent_sector_id VARCHAR(30) REFERENCES sectors(id) ON DELETE CASCADE,
+    UNIQUE(parent_sector_id, dependent_sector_id)
+);
+
+-- 3. Ordens de Produção (OPs)
+CREATE TABLE production_orders (
+    id VARCHAR(40) PRIMARY KEY,
+    product_name VARCHAR(150) NOT NULL,
+    quantity INT NOT NULL,
+    batch_code VARCHAR(50),
+    client_name VARCHAR(150),
+    order_code VARCHAR(50),
+    is_urgent BOOLEAN DEFAULT FALSE,
+    deadline_date DATE,
+    current_sector_id VARCHAR(30) REFERENCES sectors(id),
+    status VARCHAR(20) DEFAULT 'run', -- 'run', 'wait', 'pause', 'stop', 'done'
+    progress_percentage NUMERIC(5,2) DEFAULT 0,
+    elapsed_minutes INT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 4. Histórico de Apontamentos por Operador
+CREATE TABLE sector_completions (
+    id SERIAL PRIMARY KEY,
+    order_id VARCHAR(40) REFERENCES production_orders(id),
+    sector_id VARCHAR(30) REFERENCES sectors(id),
+    operator_name VARCHAR(100),
+    completed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);`;
+
+  const jsonGraph=JSON.stringify({
+    sectors:STAGES.map(s=>({id:s.id,name:s.n,independent:s.indep,deps:s.deps,pos:{x:s.x,y:s.y}})),
+    orders_sample:items.slice(0,3)
+  },null,2);
+
+  $('mbox').innerHTML=`
+    <h2>Integração com Backend & Banco de Dados</h2>
+    <p style="color:var(--muted)">Estrutura pronta para criar suas tabelas SQL e endpoints REST/WebSocket.</p>
+    <div class="seg" style="margin-bottom:12px">
+      <button id="tabSql" aria-pressed="true">Script SQL (DDL)</button>
+      <button id="tabJson" aria-pressed="false">Payload JSON (API)</button>
+    </div>
+    <div id="dbContent"><pre style="background:#0D1117;color:#C9D1D9;padding:14px;border-radius:10px;font-family:monospace;font-size:12px;overflow-x:auto;max-height:300px;line-height:1.5"><code>${esc(sql)}</code></pre></div>
+    <div class="actions" style="justify-content:flex-end;margin-top:14px">
+      <button class="btn" id="copyCodeBtn">📋 Copiar Conteúdo</button>
+      <button class="btn primary" onclick="$('modal').classList.remove('on')">Fechar</button>
+    </div>
+  `;
+  $('modal').classList.add('on');
+
+  let activeCode=sql;
+  $('tabSql').onclick=()=>{activeCode=sql;$('tabSql').setAttribute('aria-pressed',true);$('tabJson').setAttribute('aria-pressed',false);$('dbContent').innerHTML=`<pre style="background:#0D1117;color:#C9D1D9;padding:14px;border-radius:10px;font-family:monospace;font-size:12px;overflow-x:auto;max-height:300px;line-height:1.5"><code>${esc(sql)}</code></pre>`};
+  $('tabJson').onclick=()=>{activeCode=jsonGraph;$('tabJson').setAttribute('aria-pressed',true);$('tabSql').setAttribute('aria-pressed',false);$('dbContent').innerHTML=`<pre style="background:#0D1117;color:#C9D1D9;padding:14px;border-radius:10px;font-family:monospace;font-size:12px;overflow-x:auto;max-height:300px;line-height:1.5"><code>${esc(jsonGraph)}</code></pre>`};
+  $('copyCodeBtn').onclick=()=>{navigator.clipboard.writeText(activeCode);toast('Copiado para a área de transferência!')};
+}
+
+function renderFeed(){$('feed').innerHTML=feed.map(f=>`<li class="${f.kind}"><time>${f.t}</time><span>${f.msg}</span></li>`).join('')}
+function renderDrawer(){
+  const it=byId(state.open);if(!it){return}
+  const s=it.status;
+  let acts='';
+  if(s==='run')acts=`<button class="btn" data-a="pause">⏸ Pausar</button><button class="btn danger" data-a="stopAsk">⛔ Interromper</button>`;
+  if(s==='pause')acts=`<button class="btn primary" data-a="resume">▶ Retomar</button><button class="btn danger" data-a="stopAsk">⛔ Interromper</button>`;
+  if(s==='stop')acts=`<button class="btn primary" data-a="resume">▶ Retomar</button>`;
+  if(s==='wait')acts=`<button class="btn primary" data-a="resume">▶ Iniciar agora</button><button class="btn" data-a="pause">⏸ Pausar</button>`;
+  if(s!=='done')acts+=`<button class="btn" data-a="urg">${it.urg?'Remover urgência':'Marcar como urgente'}</button>`;
+  const tl=STAGES.map((st,i)=>{
+    const cls=i<it.stage||s==='done'&&i===LAST?'done':i===it.stage?'cur':'';
+    const sub=i<it.stage?`Concluído em ${it.hist[i]||30} min`:i===it.stage&&s!=='done'?`${ST[s]} · <span data-dprog>${Math.floor(it.prog)}</span>%`:i===LAST&&s==='done'?'Ordem finalizada':'Aguardando etapa anterior';
+    return `<li class="${cls}" data-s="${s}"><i>${cls==='done'?'✓':''}</i>${st.i} ${st.n}<small>${sub}</small></li>`}).join('');
+  $('drawer').innerHTML=`<button class="btn x" data-a="close" aria-label="Fechar">✕</button>
+   <span class="pill" data-s="${s}">${ST[s]}</span>${it.urg?' <span class="urg">Urgente</span>':''}
+   <h2>${it.prod}</h2><div style="color:var(--muted)">${it.id} · ${it.lote} · ${it.qty} unidades</div>
+   <div class="meta"><div>Setor atual<b>${STAGES[it.stage].i} ${STAGES[it.stage].n}</b></div><div>Prazo de entrega<b>${it.due}/2026</b></div><div>Etapa ${it.stage+1} de ${STAGES.length}<b>${Math.round((it.stage+it.prog/100)/LAST*100)}% do fluxo</b></div><div>Pedido<b>${it.pedido}</b>${it.cliente}</div><div>${s==='stop'||s==='pause'?'Motivo':'Tempo na etapa'}<b>${s==='stop'||s==='pause'?esc(it.reason):Math.round(it.mins)+' min'}</b></div><div>${s==='stop'||s==='pause'?'Registrado por':'Operador do setor'}<b>${s==='stop'||s==='pause'?esc(it.by||'—'):(OPERATORS[it.stage]||'—')}</b></div></div>
+   <div class="actions">${acts}</div>
+   ${state.reasonOpen?`<div class="reason"><select id="rsn">${REASONS.map(r=>`<option>${r}</option>`).join('')}</select><button class="btn danger sm" data-a="stop">Confirmar interrupção</button><button class="btn sm" data-a="cancel">Cancelar</button></div>`:''}
+   <ul class="tl">${tl}</ul>`;
+}
+function renderAll(){
+  renderBell();
+  if(state.role==='op'){renderOperator();return}
+  renderKPIs();renderTrack();
+  if(state.view==='diag'){
+    $('view').style.display='none';$('diagView').style.display='block';renderDiagram();
+  }else{
+    $('diagView').style.display='none';$('view').style.display='block';
+    state.view==='board'?renderBoard():renderTable();
+  }
+  if(state.open)renderDrawer();
+  if($('notif').classList.contains('on'))renderNotif();
+}
+function patch(){
+  items.forEach(it=>{
+    document.querySelectorAll(`[data-bar="${it.id}"]`).forEach(b=>b.style.width=it.prog+'%');
+    document.querySelectorAll(`[data-since="${it.id}"]`).forEach(e=>{if((it.status==='run'&&!it.ready)||it.status==='wait')e.textContent=Math.round(it.mins)+' min na etapa'});
+    document.querySelectorAll(`[data-pcs="${it.id}"]`).forEach(e=>e.textContent=Math.round(it.prog/100*it.qty));
+  });
+  const it=byId(state.open),p=document.querySelector('[data-dprog]');if(it&&p)p.textContent=Math.floor(it.prog);
+}
+function toast(m){const t=$('toast');t.textContent=m;t.classList.add('on');clearTimeout(toast.h);toast.h=setTimeout(()=>t.classList.remove('on'),2200)}
+
+function advance(it,who){
+  it.ready=false;
+  it.hist[it.stage]=Math.round(it.mins);
+  if(it.stage===10&&rnd()<.15){
+    for(let s=8;s<=10;s++)delete it.hist[s];
+    it.stage=8;it.prog=0;it.mins=0;log(`${it.id} reprovada no controle de qualidade e voltou para a Costura`,'warn');return;
+  }
+  it.stage++;it.prog=0;it.mins=0;
+  if(it.stage===LAST){it.status='done';it.prog=100;log(`${it.id} finalizada: ${it.prod}`,'ok');return}
+  log(`${it.id} avançou para ${STAGES[it.stage].n}${who?' · finalizada por '+who:''}`);
+  if(rnd()<.12){it.status='wait';it.waitT=2+Math.floor(rnd()*3)}
+}
+function tick(){
+  if(!state.live)return;
+  state.clock=new Date(state.clock.getTime()+60000*state.speed);
+  let moved=false;
+  items.forEach(it=>{
+    const sim=simFor(it);
+    if(it.status==='wait'){if(sim){it.waitT=(it.waitT||3)-1;if(it.waitT<=0){it.status='run';moved=true}}return}
+    if(it.status==='pause'){if(sim&&it.autoT>0){it.autoT-=1;if(it.autoT<=0){it.status='run';it.reason='';it.by='';log(`${it.id} retomada em ${STAGES[it.stage].n}`,'ok');moved=true}}return}
+    if(it.status!=='run')return;
+    if(!it.ready){
+      it.prog+=(1.6+rnd()*3.6)*state.speed;it.mins+=1.2*state.speed;
+      if(it.prog>=100){it.prog=100;if(sim){advance(it,OPERATORS[it.stage]);moved=true}else{it.ready=true;moved=true}}
+    }else if(sim&&rnd()<.5){advance(it,OPERATORS[it.stage]);moved=true}
+  });
+  if((state.sim||state.role==='op')&&rnd()<.05*state.speed){
+    const c=items.filter(i=>i.status==='run'&&i.stage<LAST&&i.prog<85&&simFor(i));
+    if(c.length){const it=c[Math.floor(rnd()*c.length)],r=REASONS[Math.floor(rnd()*REASONS.length)];
+      it.status='pause';it.reason=r;it.by=opName(it.stage);it.autoT=10+Math.floor(rnd()*8);registerPause(it,r,'',it.by);moved=true}
+  }
+  if(moved)renderAll();else patch();
+}
+setInterval(tick,1000);
+
+function setStatus(it,s,msg,kind){it.status=s;log(msg,kind);renderAll()}
+function action(a){
+  const it=byId(state.open);
+  if(a==='close'){closeDrawer();return}
+  if(!it)return;
+  if(a==='pause'){it.reason='Pausa solicitada pela gerência';it.by='Gerência';registerPause(it,it.reason,'','Gerência',true);setStatus(it,'pause',`${it.id} pausada em ${STAGES[it.stage].n}`);toast('Ordem pausada')}
+  if(a==='resume'){it.reason='';it.by='';it.autoT=0;setStatus(it,'run',`${it.id} retomada em ${STAGES[it.stage].n}`,'ok');toast('Ordem retomada')}
+  if(a==='urg'){it.urg=!it.urg;renderAll()}
+  if(a==='stopAsk'){state.reasonOpen=true;renderDrawer()}
+  if(a==='cancel'){state.reasonOpen=false;renderDrawer()}
+  if(a==='stop'){it.reason=$('rsn').value;it.by='Gerência';registerPause(it,'Interrompida: '+it.reason,'','Gerência',true);state.reasonOpen=false;setStatus(it,'stop',`${it.id} interrompida: ${it.reason}`,'warn');toast('Ordem interrompida')}
+}
+function openDrawer(id){closeNotif();state.open=id;state.reasonOpen=false;renderDrawer();$('drawer').classList.add('on');$('scrim').classList.add('on')}
+function closeDrawer(){state.open=null;$('drawer').classList.remove('on');$('scrim').classList.remove('on')}
+
+function openImport(){
+  $('mbox').innerHTML=`<h2>Importar planejamento em lote</h2><div style="color:var(--muted)">Envie a planilha do PCP. Cada linha vira uma ordem que entra no fluxo pela CNC.</div>
+   <div class="drop"><span class="f">📄</span><div><b>planejamento_lote_setembro.xlsx</b><div style="color:var(--muted)">12 ordens · 3 produtos · lote L-0928-D</div></div></div>
+   <div><b>Colunas reconhecidas</b><div class="map"><span>Produto <b>✓</b></span><span>Quantidade <b>✓</b></span><span>Lote <b>✓</b></span><span>Prazo <b>✓</b></span><span>Prioridade <b>✓</b></span></div></div>
+   <div class="tbl"><table style="min-width:0"><thead><tr><th>Produto</th><th>Qtd.</th><th>Prazo</th><th>Primeiro setor</th></tr></thead><tbody>
+   <tr><td>Sofá Milano 3 lugares</td><td>6</td><td>05/10</td><td>⚙️ CNC</td></tr><tr><td>Poltrona Aurora</td><td>10</td><td>06/10</td><td>⚙️ CNC</td></tr><tr><td>Cama Box Luna</td><td>8</td><td>08/10</td><td>⚙️ CNC</td></tr></tbody></table></div>
+   <div class="actions" style="justify-content:flex-end;margin-top:16px"><button class="btn" data-m="cancel">Cancelar</button><button class="btn primary" data-m="ok">Importar 12 ordens</button></div>`;
+  $('modal').classList.add('on');
+}
+function doImport(){
+  ['Sofá Milano 3 lugares','Poltrona Aurora','Cama Box Luna'].forEach(p=>{for(let i=0;i<4;i++){const it=mk(0,i?'wait':'run','L-0928-D',p);it.prog=0;it.mins=0;it.hist={};it.waitT=2+i*2;items.unshift(it)}});
+  if(!LOTES.includes('L-0928-D')){LOTES.push('L-0928-D');fillLotes()}
+  $('modal').classList.remove('on');log('12 ordens do lote L-0928-D importadas e enviadas à CNC','ok');toast('12 ordens importadas');renderAll();
+}
+function fillLotes(){$('lote').innerHTML='<option value="">Todos os lotes</option>'+LOTES.map(l=>`<option>${l}</option>`).join('')}
+
+/* Conexão Interativa no Diagrama */
+$('canvas').addEventListener('click',e=>{
+  const pOut=e.target.closest('[data-port-out]');
+  const pIn=e.target.closest('[data-port-in]');
+  const cfgBtn=e.target.closest('[data-cfg]');
+  const wire=e.target.closest('.wire-group');
+
+  if(cfgBtn){openSectorConfig(cfgBtn.dataset.cfg);return}
+
+  if(pOut){
+    const sId=pOut.dataset.portOut;
+    state.connectSource=sId;
+    document.querySelectorAll('.d-port.connecting').forEach(p=>p.classList.remove('connecting'));
+    pOut.classList.add('connecting');
+    toast(`Setor de origem: ${sId.toUpperCase()}. Agora clique na porta da esquerda do setor dependente.`);
+    return;
+  }
+
+  if(pIn&&state.connectSource){
+    const targetId=pIn.dataset.portIn;
+    if(targetId===state.connectSource){toast('Não é possível conectar um setor a ele mesmo.');resetConnect();return}
+    const targetSec=STAGES.find(x=>x.id===targetId);
+    if(targetSec){
+      if(targetSec.indep)targetSec.indep=false;
+      if(!targetSec.deps.includes(state.connectSource)){
+        targetSec.deps.push(state.connectSource);
+        const map={};STAGES.forEach(st=>map[st.id]=st.deps);
+        localStorage.setItem('fluxo_stages_deps',JSON.stringify(map));
+        drawWires();renderDiagram();
+        log(`🔗 Dependência vinculada: ${state.connectSource.toUpperCase()} ➔ ${targetSec.n}`,'ok');
+        toast(`Conectado! ${targetSec.n} agora depende de ${state.connectSource.toUpperCase()}`);
+      }else{toast('Essa conexão de dependência já existe.')}
+    }
+    resetConnect();return;
+  }
+
+  if(wire){
+    const from=wire.dataset.from,to=wire.dataset.to;
+    if(confirm(`Deseja remover a dependência de ${to.toUpperCase()} para ${from.toUpperCase()}?`)){
+      const tSec=STAGES.find(x=>x.id===to);
+      if(tSec){
+        tSec.deps=tSec.deps.filter(d=>d!==from);
+        if(tSec.deps.length===0&&['cnc','corte','laminacao','marcenaria'].includes(tSec.id))tSec.indep=true;
+        const map={};STAGES.forEach(st=>map[st.id]=st.deps);
+        localStorage.setItem('fluxo_stages_deps',JSON.stringify(map));
+        drawWires();renderDiagram();toast('Dependência removida.');
+      }
+    }
+  }
+});
+function resetConnect(){
+  state.connectSource=null;
+  document.querySelectorAll('.d-port.connecting').forEach(p=>p.classList.remove('connecting'));
+}
+
+/* events */
+$('kpis').onclick=e=>{const b=e.target.closest('[data-k]');if(!b)return;const k=b.dataset.k;state.stat.has(k)?state.stat.delete(k):state.stat.add(k);renderAll()};
+$('trackIn').onclick=e=>{const n=e.target.closest('[data-stage]');if(!n)return;const s=+n.dataset.stage;state.sector=state.sector===s?null:s;renderAll()};
+$('view').onclick=e=>{const c=e.target.closest('[data-id]');if(c)openDrawer(c.dataset.id)};
+$('drawer').onclick=e=>{const b=e.target.closest('[data-a]');if(b)action(b.dataset.a)};
+$('scrim').onclick=closePanels;
+$('mbox').onclick=e=>{const b=e.target.closest('[data-m]');if(!b)return;const m=b.dataset.m;m==='ok'?doImport():m==='pausecfm'?confirmPause():$('modal').classList.remove('on')};
+$('modal').onclick=e=>{if(e.target===$('modal'))$('modal').classList.remove('on')};
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closePanels();$('modal').classList.remove('on')}});
+$('importBtn').onclick=openImport;
+$('q').oninput=e=>{state.q=e.target.value;renderAll()};
+$('lote').onchange=e=>{state.lote=e.target.value;renderAll()};
+$('urg').onchange=e=>{state.urg=e.target.checked;renderAll()};
+$('speed').onchange=e=>{state.speed=+e.target.value};
+
+$('vBoard').onclick=()=>{
+  state.view='board';
+  $('vBoard').setAttribute('aria-pressed',true);
+  $('vList').setAttribute('aria-pressed',false);
+  $('vDiag').setAttribute('aria-pressed',false);
+  renderAll();
+};
+$('vList').onclick=()=>{
+  state.view='list';
+  $('vList').setAttribute('aria-pressed',true);
+  $('vBoard').setAttribute('aria-pressed',false);
+  $('vDiag').setAttribute('aria-pressed',false);
+  renderAll();
+};
+$('vDiag').onclick=()=>{
+  state.view='diag';
+  $('vDiag').setAttribute('aria-pressed',true);
+  $('vBoard').setAttribute('aria-pressed',false);
+  $('vList').setAttribute('aria-pressed',false);
+  renderAll();
+};
+
+$('clear').onclick=()=>{state.stat.clear();state.lote='';state.q='';state.urg=false;state.sector=null;$('q').value='';$('lote').value='';$('urg').checked=false;renderAll()};
+$('liveBtn').onclick=()=>{state.live=!state.live;$('liveBtn').classList.toggle('off',!state.live);$('liveBtn').querySelector('span').textContent=state.live?'Ao vivo':'Em pausa';$('liveBtn').setAttribute('aria-pressed',state.live)};
+$('pauseVis').onclick=()=>{const l=items.filter(i=>vis(i)&&(i.status==='run'||i.status==='wait'));l.forEach(i=>{i.status='pause';i.reason='Pausa em lote pela gerência';i.by='Gerência'});log(`${l.length} ordens pausadas pelos filtros atuais`);toast(l.length+' ordens pausadas');renderAll()};
+$('resumeVis').onclick=()=>{const l=items.filter(i=>vis(i)&&(i.status==='pause'||i.status==='stop'));l.forEach(i=>{i.status='run';i.reason='';i.by=''});log(`${l.length} ordens retomadas pelos filtros atuais`,'ok');toast(l.length+' ordens retomadas');renderAll()};
+$('themeBtn').onclick=()=>{const r=document.documentElement,dark=r.dataset.theme==='dark'||(!r.dataset.theme&&matchMedia('(prefers-color-scheme:dark)').matches);r.dataset.theme=dark?'light':'dark'};
+$('dbBtn').onclick=openDbSchemaModal;
+$('connectHelpBtn').onclick=()=>toast('Para conectar: clique na bolinha da direita do setor de origem e depois na da esquerda do setor dependente.');
+$('resetLayoutBtn').onclick=()=>{localStorage.removeItem('fluxo_stages_pos');localStorage.removeItem('fluxo_stages_deps');location.reload()};
+
+$('alerts').onclick=e=>{
+  const el=e.target.closest('.alert');if(!el)return;const p=pauses.find(x=>x.id===el.dataset.p);
+  if(e.target.closest('[data-view]')){if(p){if(p.st==='novo')p.st='visto';openDrawer(p.op)}el.remove();renderBell()}
+  else if(e.target.closest('[data-ack]')){if(p&&p.st==='novo')p.st='visto';el.remove();renderBell()}
+  else if(e.target.closest('[data-x]'))el.remove();
+};
+$('notif').onclick=e=>{
+  if(e.target.closest('[data-nx]'))return closePanels();
+  const nf=e.target.closest('[data-nf]');if(nf){state.nf=nf.dataset.nf;renderNotif();return}
+  const pv=e.target.closest('[data-pv]');
+  if(pv){const p=pauses.find(x=>x.id===pv.dataset.pv);if(p){if(p.st==='novo')p.st='visto';openDrawer(p.op);renderBell()}return}
+  const pt=e.target.closest('[data-pt]');
+  if(pt){const p=pauses.find(x=>x.id===pt.dataset.pt);if(p){p.st='tratada';renderBell();renderNotif();toast('Parada marcada como tratada')}}
+};
+$('opview').onclick=e=>{
+  const b=e.target.closest('[data-op]');if(!b)return;const it=byId(b.dataset.id);if(!it)return;const a=b.dataset.op,name=OPERATORS[state.opStage];
+  if(a==='start'&&(it.status==='wait'||it.status==='pause')){it.status='run';it.reason='';it.by='';it.autoT=0;log(`${it.id} iniciada em ${STAGES[it.stage].n} por ${name}`,'ok');toast('Ordem iniciada');renderAll()}
+  else if(a==='pause'&&(it.status==='run'||it.status==='wait'))openPauseModal(it);
+  else if(a==='fin'&&it.status==='run'){advance(it,name);toast('Etapa finalizada. A ordem seguiu para o próximo setor.');renderAll()}
+  else if((a==='plus'||a==='minus')&&it.status==='run'){it.prog=Math.max(0,Math.min(100,it.prog+(a==='plus'?1:-1)*100/it.qty));it.ready=it.prog>=100;renderOperator()}
+};
+$('roleGer').onclick=()=>setRole('ger');
+$('roleOp').onclick=()=>setRole('op');
+$('opSector').onchange=e=>{state.opStage=+e.target.value;renderOperator()};
+$('bellBtn').onclick=openNotif;
+$('sim').onchange=e=>{state.sim=e.target.checked};
+
+fillLotes();
+$('opSector').innerHTML=STAGES.slice(0,LAST).map((st,i)=>`<option value="${i}">${OPERATORS[i]} · ${st.n}</option>`).join('');
+items.filter(i=>i.status==='pause').forEach((i,k)=>registerPause(i,i.reason,'',i.by,true,'08:2'+k));
+[[3,'Falta de material','08:31'],[8,'Quebra de máquina','08:47'],[6,'Aguardando liberação da gerência','09:05'],[1,'Troca de turno ou intervalo','09:18'],[8,'Falta de material','09:26']].forEach(([st,r,t])=>{const it=items.find(i=>i.stage===st);if(it)registerPause(it,r,'',opName(st),true,t)});
+pauses.forEach((p,i)=>{if(i%3===0)p.st='tratada'});
+setRole('ger');renderFeed();
+</script>
+</body>
+</html>

@@ -1,0 +1,132 @@
+.meta {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 14px 0;
+}
+
+.meta div {
+  background: var(--surface2);
+  border-radius: var(--r-sm);
+  padding: 8px 10px;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+.meta b {
+  display: block;
+  color: var(--ink);
+  font-size: 14px;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0 4px;
+}
+
+.reason {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+  padding: 10px;
+  border: 1px dashed var(--stop);
+  border-radius: var(--r-sm);
+  align-items: center;
+}
+
+.reason select {
+  flex: 1;
+  min-width: 160px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  padding: 8px 11px;
+}
+
+.tl {
+  list-style: none;
+  margin: 16px 0 0;
+  padding: 0;
+}
+
+.tl li {
+  position: relative;
+  padding: 0 0 14px 34px;
+  color: var(--muted);
+}
+
+.tl li::before {
+  content: '';
+  position: absolute;
+  left: 10px;
+  top: 20px;
+  bottom: -2px;
+  width: 2px;
+  background: var(--line);
+}
+
+.tl li:last-child::before {
+  display: none;
+}
+
+.tl li i {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--surface2);
+  border: 2px solid var(--line);
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  font-style: normal;
+}
+
+.tl li.done {
+  color: var(--ink);
+}
+
+.tl li.done i {
+  background: var(--run);
+  border-color: var(--run);
+  color: var(--white);
+}
+
+.tl li.done::before {
+  background: var(--run);
+}
+
+.tl li.cur {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.tl li.cur i {
+  border-color: var(--c);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--c) 22%, transparent);
+  background: var(--surface);
+}
+
+.tl small {
+  display: block;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.sub {
+  color: var(--muted);
+  margin: 0 0 4px;
+}
+
+.headRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 4px;
+}

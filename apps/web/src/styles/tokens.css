@@ -1,0 +1,100 @@
+/* ==========================================================================
+   tokens.css — FONTE ÚNICA de valores visuais
+   Regra: este é o ÚNICO arquivo onde cores hex e durações "cruas" podem existir.
+   Todo o resto do projeto usa var(--token).
+   Valores extraídos do protótipo fluxo-producao-diagrama.html (tema claro).
+   Ver themes.css para o tema escuro.
+   ========================================================================== */
+
+:root {
+  /* ---------- Superfícies e texto ---------- */
+  --bg: #EBEFF5;
+  --surface: #FFFFFF;
+  --surface2: #F4F6FA;
+  --ink: #172037;
+  --muted: #63708A;
+  --line: #DCE2EC;
+
+  /* ---------- Marca ---------- */
+  --brand: #2A4DE0;
+  --brand-ink: #FFFFFF;
+  --white: #FFFFFF;         /* realces sobre fundos escuros (anel de seleção, porta) */
+
+  /* ---------- STATUS (semântica fixa — não alterar o significado) ----------
+     run   = em produção      wait = aguardando      pause = pausada
+     stop  = interrompida     done = finalizada                            */
+  --run: #0E9F73;
+  --wait: #6F7FA0;
+  --pause: #D9950B;
+  --stop: #DC3F4A;
+  --done: #7357E6;
+
+  /* ---------- Trilho de produção (sempre escuro, em qualquer tema) ---------- */
+  --track: #132043;
+  --track-line: #2B3B6B;
+  --track-ink: #E8EDFF;
+  --track-muted: #AEB9DA;
+  --track-orb: #1E2E5C;
+
+  /* ---------- Sinais sobre fundo escuro ---------- */
+  --flow: #3DDBA9;          /* fluxo ativo (pontos, fio animado, seta) */
+  --alert-on-dark: #FF6B74; /* setor com interrupção */
+
+  /* ---------- Diagrama de dependências (sempre escuro) ---------- */
+  --dg-frame: #0B101E;
+  --dg-canvas: #080C16;
+  --dg-panel: #111827;
+  --dg-panel-2: #0F172A;
+  --dg-border: #1E293B;
+  --dg-ink: #F3F4F6;
+  --dg-muted: #9CA3AF;
+  --dg-wire: #475569;
+  --dg-wire-arrow: #64748B;
+  --dg-wire-hover: #38BDF8;
+  --dg-port: #1E293B;
+  --dg-port-border: #94A3B8;
+  --dg-connect: #10B981;
+  --grid-dot: rgba(255, 255, 255, .14);
+
+  /* ---------- Tipografia ---------- */
+  --font-h: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif; /* títulos e números */
+  --font-b: "Figtree", "Segoe UI", system-ui, sans-serif;            /* corpo */
+
+  /* ---------- Raios ---------- */
+  --r-sm: 10px;
+  --r-md: 12px;
+  --r-kpi: 14px;
+  --r-lg: 16px;
+  --r-xl: 20px;
+  --r-pill: 999px;
+
+  /* ---------- Sombras ---------- */
+  --shadow: 0 1px 2px rgba(23, 32, 55, .06), 0 6px 18px rgba(23, 32, 55, .05);
+  --shadow-alert: 0 14px 44px rgba(0, 0, 0, .3);
+  --shadow-drawer: -10px 0 40px rgba(0, 0, 0, .2);
+  --shadow-modal: 0 30px 80px rgba(0, 0, 0, .35);
+  --scrim: rgba(8, 12, 26, .5);
+
+  /* ---------- Camadas (z-index) ---------- */
+  --z-scrim: 20;
+  --z-drawer: 30;
+  --z-modal: 40;
+  --z-alerts: 50;
+  --z-toast: 60;
+
+  /* ---------- Movimento: transições de interação ---------- */
+  --dur-fast: .12s;
+  --dur-base: .2s;
+  --dur-slow: .28s;
+  --ease-out: cubic-bezier(.2, .8, .2, 1);          /* drawer, painéis */
+  --ease-overshoot: cubic-bezier(.2, .9, .3, 1.2);  /* alerta "caindo" */
+
+  /* ---------- Movimento: loops de estado "vivo" ---------- */
+  --dur-ping: 1.6s;       /* indicador "Ao vivo" */
+  --dur-travel: 2.2s;     /* pontos viajando no conector */
+  --dur-wire: .9s;        /* fio tracejado do diagrama */
+  --dur-stripes: .8s;     /* barra de progresso em produção */
+  --dur-alert: 1.4s;      /* pulso do setor com interrupção */
+  --dur-stopflash: 2s;    /* card interrompido */
+  --dot-stagger: .75s;    /* defasagem entre pontos do mesmo conector (usar como --d negativo) */
+}

@@ -1,0 +1,66 @@
+/* ==========================================================================
+   base.css — reset mínimo, tipografia base, foco visível, safe-area (mobile)
+   ========================================================================== */
+
+:root {
+  box-sizing: border-box;
+  /* iPhone com notch: o conteúdo respeita as barras do sistema */
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+html {
+  scroll-padding-top: env(safe-area-inset-top, 0px);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-b);
+  font-size: 14px;
+  line-height: 1.45;
+  min-height: 100%;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+/* Foco sempre visível (teclado) */
+:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+/* Rolagem horizontal suave/discreta nos contêineres largos */
+.track,
+.board,
+.tbl,
+.diagram-canvas {
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+
+/* Títulos e números grandes usam a fonte de display */
+h1, h2, h3, h4 {
+  font-family: var(--font-h);
+}

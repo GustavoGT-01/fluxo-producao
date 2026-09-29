@@ -1,0 +1,93 @@
+/* ==========================================================================
+   animations.css — CATÁLOGO OFICIAL de @keyframes
+   Regras:
+   • Este é o ÚNICO arquivo que pode declarar @keyframes.
+   • Não criar animação nova sem justificar (movimento = atividade real).
+   • Preferir transform/opacity (GPU). Exceções documentadas abaixo.
+   • Quem aplica cada animação a um seletor é o motion.css.
+
+   Nome            Propósito                               Onde é aplicado
+   ping            sistema "Ao vivo"                       .live i::after
+   travel          material fluindo entre setores          .conn .dot
+   alertpulse      setor com interrupção                   .node.alert .orb::after
+   wireflow        dependência com fluxo ativo (SVG)       .d-path.flow-active
+   portpulse       porta em modo "conectando"              .d-port.connecting
+   stripes         progresso em produção                   barra .bar span
+   stopflash       card interrompido                       .card[data-s=stop]::after
+   ring            sino ao chegar nova parada              .bell.ring
+   drop            alerta "caindo" na tela                 .alert
+   slidein         item novo no feed                       .feed li
+   pop             modal abrindo                           .mbox
+   ========================================================================== */
+
+/* Pulso do indicador "Ao vivo" — pseudo-elemento que escala e some (sem box-shadow) */
+@keyframes ping {
+  0%   { transform: scale(1);   opacity: .55; }
+  70%,
+  100% { transform: scale(2.6); opacity: 0; }
+}
+
+/* Ponto luminoso viajando pelo conector — usa transform, não `left`.
+   100cqw = largura do conector (ele é um container, ver motion.css) */
+@keyframes travel {
+  from { transform: translateX(-14px); }
+  to   { transform: translateX(100cqw); }
+}
+
+/* Fallback p/ navegadores sem container query units (versão original, anima `left`) */
+@keyframes travel-fallback {
+  to { left: 100%; }
+}
+
+/* Anel vermelho expandindo em volta do setor com interrupção */
+@keyframes alertpulse {
+  0%   { transform: scale(1);   opacity: .7; }
+  70%,
+  100% { transform: scale(1.5); opacity: 0; }
+}
+
+/* Fio tracejado "andando" no diagrama (SVG: stroke-dashoffset) */
+@keyframes wireflow {
+  to { stroke-dashoffset: -20; }
+}
+
+/* Porta do nó pulsando enquanto espera a conexão (1 elemento por vez) */
+@keyframes portpulse {
+  50% {
+    transform: translateY(-50%) scale(1.5);
+    box-shadow: 0 0 10px var(--dg-connect);
+  }
+}
+
+/* Listras deslizando na barra de progresso */
+@keyframes stripes {
+  to { background-position: 14px 0; }
+}
+
+/* Tint vermelho piscando no card interrompido (overlay com opacity) */
+@keyframes stopflash {
+  50% { opacity: .09; }
+}
+
+/* Sino balançando (disparo único) */
+@keyframes ring {
+  20% { transform: rotate(-12deg); }
+  40% { transform: rotate(10deg); }
+  60% { transform: rotate(-7deg); }
+  80% { transform: rotate(4deg); }
+}
+
+/* Alerta caindo no topo da tela */
+@keyframes drop {
+  from { opacity: 0; transform: translateY(-18px) scale(.97); }
+}
+
+/* Item novo entrando no feed */
+@keyframes slidein {
+  from { opacity: 0; transform: translateY(-6px); }
+}
+
+/* Modal abrindo */
+@keyframes pop {
+  from { opacity: 0; transform: scale(.96); }
+}

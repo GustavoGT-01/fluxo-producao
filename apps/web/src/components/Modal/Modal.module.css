@@ -1,0 +1,38 @@
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: var(--scrim);
+}
+
+.mbox {
+  background: var(--surface);
+  border-radius: var(--r-xl);
+  width: min(720px, 100%);
+  max-height: 92vh;
+  overflow: auto;
+  padding: 22px;
+  box-shadow: var(--shadow-modal);
+}
+
+.title {
+  margin: 0 0 4px;
+  font-family: var(--font-h);
+  font-size: 22px;
+  letter-spacing: -0.01em;
+}
+
+@media (max-width: 640px) {
+  .modal {
+    padding: 8px;
+  }
+
+  .mbox {
+    padding: 16px 14px;
+    border-radius: var(--r-lg);
+    max-height: 90vh;
+  }
+}

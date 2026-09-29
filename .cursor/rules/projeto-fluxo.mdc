@@ -1,0 +1,21 @@
+---
+description: Constituição do fluxo de produção — stack, camadas e o que não mudar
+alwaysApply: true
+---
+
+# Fluxo de produção
+
+Stack desta execução: React 18 + TypeScript strict + Vite + CSS Modules + Zustand. Sem Tailwind. Sem hex de status fora de `tokens.css`.
+
+Camadas, dependência só para baixo:
+
+- `domain/` — funções puras. Zero React, DOM, `fetch`.
+- `store/` — Zustand. Estado derivado em `selectors.ts`, nunca persistido como fonte.
+- `features/` — telas. Podem usar `components/`, `store/`, `domain/`.
+- `components/` — UI genérica. Não conhecem OP, setor nem status de negócio além de `data-s`.
+
+Uma feature não importa outra feature. Compartilhar = promover para `components/` ou `domain/`.
+
+Progresso da OP é `progressBySector`, não índice `stage`. Setor só inicia se `canStart` (todos os `deps` em `done`). Ciclo bloqueado por `wouldCreateCycle` antes de gravar aresta.
+
+Antes de UI, ler a skill `fluxo-frontend`. Antes de regra de grafo ou ordem, ler `fluxo-dominio`.

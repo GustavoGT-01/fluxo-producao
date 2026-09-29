@@ -1,0 +1,68 @@
+/* ==========================================================================
+   status.css — camada semântica de STATUS
+   Mecanismo central do visual: UM atributo (data-s) define a variável --c.
+   Qualquer elemento (pílula, KPI, card, barra, timeline, drawer) herda a cor.
+
+   USO:   <div class="card" data-s="pause"> …  </div>
+   REGRA: nunca escrever cor de status em componente. Use var(--c).
+   ========================================================================== */
+
+[data-s="run"]   { --c: var(--run); }
+[data-s="wait"]  { --c: var(--wait); }
+[data-s="pause"] { --c: var(--pause); }
+[data-s="stop"]  { --c: var(--stop); }
+[data-s="done"]  { --c: var(--done); }
+
+/* Faixa lateral colorida (cards, KPIs, cartões do operador) */
+.status-accent {
+  border-left: 5px solid var(--c);
+}
+
+/* Pílula de status: cor + TEXTO (cor nunca é o único sinal) */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border-radius: var(--r-pill);
+  padding: 1px 9px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--c);
+  background: color-mix(in srgb, var(--c) 14%, transparent);
+}
+.pill::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--c);
+}
+
+/* Urgente */
+.urg {
+  color: var(--stop);
+  font-weight: 700;
+}
+
+/* Barra de progresso (o efeito listrado de "em produção" está em motion.css) */
+.bar {
+  height: 7px;
+  border-radius: 7px;
+  background: var(--surface2);
+  overflow: hidden;
+  border: 1px solid var(--line);
+}
+.bar span {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: var(--c);
+  border-radius: 7px;
+  transition: width .9s linear;
+}
+
+/* Destaque de seleção (KPI filtrando por status) */
+[aria-pressed="true"][data-s] {
+  background: color-mix(in srgb, var(--c) 12%, var(--surface));
+  outline: 2px solid var(--c);
+}

@@ -1,0 +1,79 @@
+.scrim {
+  position: fixed;
+  inset: 0;
+  background: var(--scrim);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-base);
+  z-index: var(--z-scrim);
+}
+
+.scrimOn {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(440px, 100%);
+  background: var(--surface);
+  z-index: var(--z-drawer);
+  transform: translateX(102%);
+  transition: transform var(--dur-slow) var(--ease-out);
+  padding: calc(20px + env(safe-area-inset-top, 0px)) 20px
+    calc(20px + env(safe-area-inset-bottom, 0px));
+  overflow-y: auto;
+  border-left: 1px solid var(--line);
+  box-shadow: var(--shadow-drawer);
+}
+
+.drawerOn {
+  transform: none;
+}
+
+.head {
+  position: relative;
+  padding-right: 40px;
+}
+
+.title {
+  font-family: var(--font-h);
+  margin: 6px 0 2px;
+  font-size: 22px;
+  letter-spacing: -0.01em;
+}
+
+.close {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  border-radius: var(--r-sm);
+  font-weight: 600;
+  transition: transform var(--dur-fast), background var(--dur-fast);
+}
+
+.close:hover {
+  background: var(--surface2);
+}
+
+.close:active {
+  transform: scale(0.97);
+}
+
+@media (max-width: 640px) {
+  .drawer {
+    width: 100%;
+    border-left: none;
+  }
+}

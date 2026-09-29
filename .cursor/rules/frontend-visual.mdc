@@ -1,0 +1,26 @@
+---
+description: Sistema visual — tokens, data-s, movimento e trilho escuro
+globs: "**/*.{css,tsx}"
+alwaysApply: false
+---
+
+# Visual
+
+Fonte: `files/styles/` (pack de 8) e `GUIA-VISUAL-ANIMACAO-fluxo-producao.md`.
+
+- Status só via `data-s="run|wait|pause|stop|done"`. Cor do status = `var(--c)`. Nunca hex de status em componente.
+- Hex e duração crua só em `tokens.css`. Resto = `var(--token)`.
+- `@keyframes` só em `animations.css`, só o catálogo (`ping`, `travel`, `alertpulse`, `wireflow`, `portpulse`, `stripes`, `stopflash`, `ring`, `drop`, `slidein`, `pop`). Animação nova exige entrada no catálogo.
+- Loop infinito só em estado vivo (`run`, fio ativo, alerta, porta conectando). `wait`, `pause` e `done` estáticos.
+- Animar `transform` e `opacity`. Exceção: `stroke-dashoffset`, `background-position`, `box-shadow` no `portpulse`.
+- Cor nunca é o único sinal: texto, ícone ou forma junto.
+- `prefers-reduced-motion` e `data-motion="off"` mantêm o significado (já em `motion.css`).
+- Trilho e diagrama sempre escuros (`--track*`, `--dg-*`) nos dois temas.
+- `<html data-theme>` `light|dark` (ausente = sistema). `data-role` `manager|operator`. `data-motion` `off|paused`.
+
+```tsx
+// certo
+<div data-s={status} className={s.card} />
+// errado
+<div style={{ borderColor: '#D9950B' }} />
+```

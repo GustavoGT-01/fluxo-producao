@@ -1,0 +1,27 @@
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(22px + env(safe-area-inset-bottom, 0px));
+  transform: translate(-50%, 30px);
+  background: var(--ink);
+  color: var(--bg);
+  padding: 10px 16px;
+  border-radius: var(--r-md);
+  opacity: 0;
+  transition: 0.25s;
+  z-index: var(--z-toast);
+  pointer-events: none;
+}
+
+.on {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+@media (max-width: 640px) {
+  .toast {
+    width: calc(100% - 24px);
+    text-align: center;
+    font-size: 13px;
+  }
+}

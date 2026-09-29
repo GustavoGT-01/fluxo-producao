@@ -1,0 +1,13 @@
+/* ==========================================================================
+   index.css — ponto de entrada. A ORDEM IMPORTA:
+   tokens → temas → fontes → base → status → animações → movimento
+   Importe apenas este arquivo em main.tsx:  import './styles/index.css'
+   ========================================================================== */
+
+@import "./tokens.css";
+@import "./themes.css";
+@import "./fonts.css";
+@import "./base.css";
+@import "./status.css";
+@import "./animations.css";
+@import "./motion.css";

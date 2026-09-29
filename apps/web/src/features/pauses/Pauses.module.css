@@ -1,0 +1,147 @@
+.alerts {
+  position: fixed;
+  top: calc(12px + env(safe-area-inset-top, 0px));
+  right: 12px;
+  z-index: var(--z-alerts);
+  display: grid;
+  gap: 10px;
+  width: min(410px, calc(100% - 24px));
+  pointer-events: none;
+}
+
+.alert {
+  pointer-events: auto;
+  background: var(--surface);
+  border: 1px solid var(--pause);
+  border-left: 7px solid var(--pause);
+  border-radius: var(--r-kpi);
+  padding: 12px 14px;
+  box-shadow: var(--shadow-alert);
+}
+
+.alert h4 {
+  margin: 0 0 8px;
+  font-family: var(--font-h);
+  font-size: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.kv {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 3px 12px;
+  font-size: 13px;
+  margin: 0;
+}
+
+.kv dt {
+  color: var(--muted);
+}
+
+.kv dd {
+  margin: 0;
+  font-weight: 600;
+}
+
+.acts2 {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.panel {
+  margin-top: 16px;
+}
+
+.pcard {
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: 12px;
+  margin-top: 10px;
+  background: var(--surface2);
+}
+
+.pcardNew {
+  border-color: var(--pause);
+  background: color-mix(in srgb, var(--pause) 9%, var(--surface));
+}
+
+.pcardHead {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  align-items: center;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.muted {
+  color: var(--muted);
+  margin: 0 0 8px;
+}
+
+.reasons {
+  display: grid;
+  gap: 8px;
+  margin: 14px 0;
+}
+
+.reasons label {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.reasons label:has(input:checked) {
+  border-color: var(--pause);
+  background: color-mix(in srgb, var(--pause) 12%, transparent);
+}
+
+.noteLabel {
+  font-weight: 600;
+  display: block;
+  margin-bottom: 6px;
+}
+
+.note {
+  width: 100%;
+  min-height: 72px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  padding: 8px 11px;
+  resize: vertical;
+}
+
+.modalActs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 14px;
+}
+
+.empty {
+  color: var(--muted);
+  text-align: center;
+  padding: 18px 6px;
+  border: 1px dashed var(--line);
+  border-radius: var(--r-md);
+  font-size: 13px;
+  margin-top: 12px;
+}

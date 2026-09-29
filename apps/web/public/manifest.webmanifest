@@ -1,0 +1,9 @@
+{
+  "name": "Fluxo de Produção",
+  "short_name": "Fluxo",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f1419",
+  "theme_color": "#0f1419",
+  "icons": []
+}

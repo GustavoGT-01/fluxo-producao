@@ -1,0 +1,102 @@
+.track {
+  background: var(--track);
+  color: var(--track-ink);
+  border-radius: var(--r-xl);
+  padding: 22px 10px 16px;
+  margin-bottom: 14px;
+  overflow-x: auto;
+  box-shadow: var(--shadow);
+}
+
+.trackIn {
+  display: flex;
+  min-width: 1120px;
+}
+
+.node {
+  flex: 1;
+  position: relative;
+  background: none;
+  border: 0;
+  color: inherit;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 0 2px;
+  text-align: center;
+}
+
+.orb {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 22px;
+  background: var(--track-orb);
+  border: 2px solid var(--track-line);
+  position: relative;
+  z-index: 2;
+}
+
+.node b {
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.2;
+  min-height: 30px;
+  display: flex;
+  align-items: center;
+}
+
+.node em {
+  font-style: normal;
+  font-family: var(--font-h);
+  font-weight: 700;
+  font-size: 13px;
+  background: color-mix(in srgb, var(--white) 10%, transparent);
+  border-radius: var(--r-pill);
+  padding: 1px 10px;
+}
+
+.conn {
+  position: absolute;
+  top: 23px;
+  left: calc(50% + 26px);
+  width: calc(100% - 52px);
+  height: 3px;
+  background: var(--track-line);
+  border-radius: 3px;
+  z-index: 1;
+  overflow: hidden;
+}
+
+.legend {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  color: var(--track-muted);
+  font-size: 12px;
+  padding: 12px 12px 0;
+}
+
+.legend i {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+.swatchFlow {
+  background: var(--flow);
+}
+
+.swatchHold {
+  background: var(--pause);
+}
+
+.swatchAlert {
+  background: var(--alert-on-dark);
+}

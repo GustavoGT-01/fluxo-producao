@@ -1,0 +1,24 @@
+---
+description: Fronteiras React do fluxo — componentes, features, JSX seguro
+globs: "**/*.{ts,tsx}"
+alwaysApply: false
+---
+
+# Arquitetura frontend
+
+Molde de pasta:
+
+```
+FeatureOuComponente.tsx
+FeatureOuComponente.module.css
+index.ts
+```
+
+- Nome de componente `PascalCase`. Hook `useCamelCase`. CSS Module `Nome.module.css`.
+- Import absoluto `@/`.
+- Dado dinâmico só em JSX. Proibido `dangerouslySetInnerHTML` com texto de usuário.
+- `if` de regra de fábrica (pode iniciar, ciclo, ordem topológica, filtro de OP) mora em `domain/`, não no componente.
+- Diagrama desta rodada: nós `div` + SVG Bézier com classes `d-node`, `d-port`, `d-path`, `flow-active`. React Flow fica para ADR futuro.
+- Drag do diagrama não pode ser morto por re-render do tick. Tick atualiza contadores e classe `flow-active`, não recria os nós.
+- Alvos de toque do operador ≥ 56px.
+- Persistência do grafo: um objeto versionado (`version: 1`) com `deps` e `pos`. `isIndependent` = `deps.length === 0`.

@@ -1,0 +1,40 @@
+/* ==========================================================================
+   themes.css — tema claro/escuro
+   Três camadas (ordem importa):
+     1. :root (claro) está em tokens.css
+     2. Preferência do sistema: escuro, EXCETO se o usuário forçou claro
+     3. Escolha explícita do usuário: [data-theme="dark"]
+   Só mudam superfícies, texto e marca. As cores de STATUS, o trilho e o
+   diagrama são iguais nos dois temas de propósito (reconhecimento imediato).
+   Trocar tema em JS:  document.documentElement.dataset.theme = 'dark' | 'light'
+   ========================================================================== */
+
+:root {
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #0C1224;
+    --surface: #151E38;
+    --surface2: #1B2645;
+    --ink: #E7ECFA;
+    --muted: #93A0BF;
+    --line: #263457;
+    --brand: #6C8BFF;
+    --brand-ink: #0C1224;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0C1224;
+  --surface: #151E38;
+  --surface2: #1B2645;
+  --ink: #E7ECFA;
+  --muted: #93A0BF;
+  --line: #263457;
+  --brand: #6C8BFF;
+  --brand-ink: #0C1224;
+}

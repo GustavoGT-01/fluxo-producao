@@ -1,0 +1,129 @@
+.muted {
+  margin: 0 0 12px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.error {
+  margin: 0 0 12px;
+}
+
+.empty {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  padding: 16px;
+  border: 1px dashed var(--line);
+  border-radius: var(--r-md);
+  text-align: center;
+}
+
+.tableWrap {
+  overflow: auto;
+  max-height: min(42vh, 360px);
+  margin-bottom: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.table th,
+.table td {
+  padding: 8px 10px;
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+
+.table th {
+  position: sticky;
+  top: 0;
+  background: var(--surface2);
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.estimate {
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+}
+
+.estimate h4 {
+  margin: 0 0 10px;
+  font-family: var(--font-h);
+  font-size: 15px;
+}
+
+.form {
+  display: grid;
+  grid-template-columns: 1.4fr 0.6fr auto;
+  gap: 8px;
+  align-items: end;
+  margin-bottom: 12px;
+}
+
+.label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-weight: 700;
+  font-size: 13px;
+  min-width: 0;
+}
+
+.input {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  border-radius: var(--r-sm);
+  min-height: 44px;
+  padding: 8px 12px;
+  font: inherit;
+  width: 100%;
+}
+
+.result {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.result li {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 10px;
+  align-items: baseline;
+  padding: 8px 10px;
+  background: var(--surface2);
+  border-radius: var(--r-sm);
+  font-size: 13px;
+}
+
+.result em {
+  color: var(--muted);
+  font-style: normal;
+  font-size: 12px;
+}
+
+.total {
+  background: color-mix(in srgb, var(--brand) 10%, var(--surface2));
+  font-weight: 700;
+}
+
+@media (max-width: 520px) {
+  .form {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .form > :last-child {
+    grid-column: 1 / -1;
+  }
+}

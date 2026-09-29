@@ -1,0 +1,220 @@
+/* ==========================================================================
+   motion.css — onde cada animação é aplicada
+   Princípio: MOVIMENTO = ATIVIDADE. Estado parado/aguardando é ESTÁTICO.
+   • Loops infinitos só em estados "vivos": run, fluxo ativo, alerta, conectando.
+   • Todo movimento tem equivalente estático em prefers-reduced-motion.
+   • Chaves de controle no <html>:
+       data-motion="off"     congela tudo (testes visuais / screenshots)
+       data-motion="paused"  pausa loops (aba oculta, painel fora de vista)
+   ========================================================================== */
+
+/* -------- Indicador "Ao vivo" -------- */
+.live i {
+  position: relative;
+  background: var(--run);
+}
+.live i::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: var(--run);
+  animation: ping var(--dur-ping) ease-out infinite;
+}
+.live.off i {
+  background: var(--wait);
+}
+.live.off i::after {
+  animation: none;
+  opacity: 0;
+}
+
+/* -------- Trilho de produção: orb do setor -------- */
+.orb {
+  transition: transform var(--dur-base), border-color var(--dur-base), box-shadow var(--dur-base);
+}
+.node:hover .orb {
+  transform: scale(1.08);
+}
+.node.sel .orb {
+  border-color: var(--white);
+  box-shadow: 0 0 0 5px color-mix(in srgb, var(--white) 16%, transparent);
+}
+.node.active .orb {
+  border-color: var(--flow);
+}
+.node.alert .orb {
+  border-color: var(--alert-on-dark);
+}
+.node.alert .orb::after {
+  content: "";
+  position: absolute;
+  inset: -2px;                       /* cobre a borda de 2px do orb */
+  border-radius: 50%;
+  border: 2px solid var(--alert-on-dark);
+  pointer-events: none;
+  animation: alertpulse var(--dur-alert) ease-out infinite;
+}
+
+/* -------- Trilho de produção: conector entre setores -------- */
+.conn {
+  container-type: inline-size;       /* habilita 100cqw no keyframe travel */
+}
+.conn.flow {
+  background: var(--track-line);
+}
+.conn.hold {                         /* só há ordens pausadas: tracejado âmbar, ESTÁTICO */
+  background: repeating-linear-gradient(90deg, var(--pause) 0 6px, transparent 6px 12px);
+}
+.conn .dot {
+  position: absolute;
+  top: -1px;
+  left: 0;
+  width: 14px;
+  height: 5px;
+  border-radius: 5px;
+  background: linear-gradient(90deg, transparent, var(--flow));
+  transform: translateX(-14px);
+  will-change: transform;
+  animation: travel var(--dur-travel) linear infinite;
+  animation-delay: var(--d, 0s);     /* defasagem negativa por ponto: style="--d:-.75s" */
+}
+@supports not (width: 1cqw) {
+  .conn .dot {
+    left: -10px;
+    transform: none;
+    animation-name: travel-fallback;
+  }
+}
+
+/* -------- Diagrama de dependências -------- */
+.d-node {
+  transition: transform var(--dur-fast), box-shadow var(--dur-base);
+}
+.d-port {
+  transition: transform .15s, background .15s, border-color .15s;
+}
+.d-port:hover {
+  transform: translateY(-50%) scale(1.4);
+  background: var(--brand);
+  border-color: var(--white);
+}
+.d-port.connecting {
+  background: var(--dg-connect);
+  border-color: var(--white);
+  animation: portpulse 1s infinite;
+}
+.d-path {
+  transition: stroke .2s, stroke-width .2s;
+}
+.d-path.flow-active {                /* fluxo ativo: verde tracejado "andando" */
+  stroke: var(--flow);
+  stroke-dasharray: 6 4;
+  animation: wireflow var(--dur-wire) linear infinite;
+}
+
+/* -------- Cards, KPIs e barras -------- */
+.kpi,
+.card {
+  transition: transform .15s, box-shadow .15s;
+}
+.kpi:hover,
+.card:hover {
+  transform: translateY(-2px);
+}
+
+/* Listras só em "em produção" (mesmo escopo do protótipo) */
+.card[data-s="run"] .bar span,
+.opcard[data-s="run"] .bar span {
+  background-image: linear-gradient(135deg,
+    rgba(255, 255, 255, .35) 25%, transparent 25% 50%,
+    rgba(255, 255, 255, .35) 50% 75%, transparent 75%);
+  background-size: 14px 14px;
+  animation: stripes var(--dur-stripes) linear infinite;
+}
+
+/* Card interrompido: tint vermelho pulsando (overlay, sem repintar o fundo) */
+.card[data-s="stop"] {
+  position: relative;
+}
+.card[data-s="stop"]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--stop);
+  opacity: 0;
+  pointer-events: none;
+  animation: stopflash var(--dur-stopflash) infinite;
+}
+
+/* -------- Notificações -------- */
+.bell.ring {
+  animation: ring .7s;               /* reiniciar: remover classe, forçar reflow, readicionar */
+}
+.alert {
+  animation: drop .35s var(--ease-overshoot);
+}
+.feed li {
+  animation: slidein .4s;
+}
+.mbox {
+  animation: pop .25s;
+}
+
+/* -------- Painéis e feedbacks -------- */
+.scrim {
+  transition: opacity var(--dur-base);
+}
+.drawer {
+  transition: transform var(--dur-slow) var(--ease-out);
+}
+.toast {
+  transition: .25s;
+}
+
+/* ==========================================================================
+   CHAVES DE CONTROLE
+   ========================================================================== */
+
+/* Aba oculta / painel fora de vista: pausa os loops (economiza CPU/bateria) */
+:root[data-motion="paused"] *,
+:root[data-motion="paused"] *::before,
+:root[data-motion="paused"] *::after {
+  animation-play-state: paused !important;
+}
+
+/* Congelado: testes visuais determinísticos (Playwright) */
+:root[data-motion="off"] *,
+:root[data-motion="off"] *::before,
+:root[data-motion="off"] *::after {
+  animation: none !important;
+  transition: none !important;
+}
+
+/* ==========================================================================
+   MOVIMENTO REDUZIDO — troca movimento por SINAL ESTÁTICO equivalente,
+   para que o significado ("está ativo", "há alerta") não se perca.
+   O mesmo bloco vale para data-motion="off".
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+  .live i::after { display: none; }
+  .conn.flow { background: var(--run); }              /* linha verde sólida no lugar dos pontos */
+  .conn .dot { display: none; }
+  .node.alert .orb { border-width: 4px; }             /* borda grossa no lugar do pulso */
+  .node.alert .orb::after { display: none; }
+  .d-path.flow-active { stroke-dasharray: none; }     /* fio verde contínuo */
+  .card[data-s="stop"]::after { opacity: .09; }       /* tint fixo */
+}
+
+:root[data-motion="off"] .live i::after { display: none; }
+:root[data-motion="off"] .conn.flow { background: var(--run); }
+:root[data-motion="off"] .conn .dot { display: none; }
+:root[data-motion="off"] .node.alert .orb { border-width: 4px; }
+:root[data-motion="off"] .node.alert .orb::after { display: none; }
+:root[data-motion="off"] .d-path.flow-active { stroke-dasharray: none; }
+:root[data-motion="off"] .card[data-s="stop"]::after { opacity: .09; }

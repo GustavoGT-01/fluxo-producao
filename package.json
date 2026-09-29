@@ -1,0 +1,15 @@
+{
+  "name": "fluxo-producao",
+  "private": true,
+  "packageManager": "pnpm@9.15.9",
+  "scripts": {
+    "dev": "pnpm --parallel --filter web --filter api dev",
+    "dev:demo": "pnpm --parallel --filter web --filter api run dev:demo",
+    "dev:web": "pnpm --filter web dev",
+    "dev:api": "pnpm --filter api dev",
+    "test": "pnpm --filter web test && pnpm --filter api test",
+    "typecheck": "pnpm --filter web typecheck && pnpm --filter api typecheck",
+    "lint": "pnpm --filter web lint",
+    "build": "pnpm --filter web build"
+  }
+}

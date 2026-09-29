@@ -1,0 +1,129 @@
+.board {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 12px;
+  align-items: stretch;
+  scroll-snap-type: x proximity;
+  scrollbar-width: thin;
+}
+
+.board.focus {
+  overflow-x: hidden;
+  scroll-snap-type: none;
+}
+
+.col {
+  flex: 0 0 min(268px, 82vw);
+  background: var(--surface2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: 10px;
+  max-height: min(640px, 70vh);
+  display: flex;
+  flex-direction: column;
+  scroll-snap-align: start;
+  min-width: 0;
+}
+
+.board.focus .col {
+  flex: 1 1 auto;
+  width: 100%;
+  max-width: none;
+  max-height: min(720px, 72vh);
+}
+
+.col.sel {
+  outline: 2px solid var(--brand);
+}
+
+.col h3 {
+  margin: 2px 4px 10px;
+  font-family: var(--font-h);
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.count {
+  margin-left: auto;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  padding: 0 9px;
+  font-size: 12px;
+}
+
+.list {
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 2px;
+  flex: 1;
+  min-height: 0;
+}
+
+.empty {
+  color: var(--muted);
+  text-align: center;
+  padding: 18px 6px;
+  border: 1px dashed var(--line);
+  border-radius: var(--r-md);
+  font-size: 13px;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-left: 5px solid var(--c);
+  border-radius: var(--r-md);
+  padding: 10px 11px;
+  text-align: left;
+  width: 100%;
+  box-shadow: var(--shadow);
+}
+
+.r1 {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.nm {
+  font-weight: 600;
+  margin: 3px 0 7px;
+  line-height: 1.25;
+}
+
+.qty {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.r2 {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 7px;
+}
+
+@media (min-width: 1440px) {
+  .board:not(.focus) {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    overflow-x: visible;
+    scroll-snap-type: none;
+  }
+
+  .board:not(.focus) .col {
+    flex: unset;
+    width: auto;
+    max-height: min(560px, 65vh);
+  }
+}

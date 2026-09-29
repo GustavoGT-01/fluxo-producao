@@ -1,0 +1,79 @@
+.feed {
+  margin-top: 16px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: 14px 16px;
+}
+
+.head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.feed h3 {
+  margin: 0;
+  font-family: var(--font-h);
+  font-size: 16px;
+}
+
+.count {
+  color: var(--muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.chip {
+  min-height: 36px;
+  padding: 6px 12px;
+  font-size: 13px;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+  max-height: min(280px, 40vh);
+  overflow: auto;
+}
+
+.feed li {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+}
+
+.feed li time {
+  color: var(--muted);
+  font-size: 12px;
+  min-width: 44px;
+  flex-shrink: 0;
+}
+
+.feed li[data-kind='pause'] span {
+  color: var(--pause);
+}
+
+.empty {
+  color: var(--muted);
+  font-size: 13px;
+  padding: 8px 0;
+}
+
+.more {
+  margin-top: 8px;
+  width: 100%;
+  min-height: 40px;
+}

@@ -1,0 +1,45 @@
+.tbl {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  overflow-x: auto;
+}
+
+.tbl table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 820px;
+}
+
+.tbl th,
+.tbl td {
+  text-align: left;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+.tbl th {
+  font-size: 12.5px;
+  color: var(--muted);
+  font-weight: 600;
+  background: var(--surface2);
+}
+
+.row {
+  cursor: pointer;
+}
+
+.row:hover td {
+  background: var(--surface2);
+}
+
+.barCell {
+  width: 140px;
+}
+
+.empty {
+  color: var(--muted);
+  text-align: center;
+  padding: 18px 6px;
+  font-size: 13px;
+}
