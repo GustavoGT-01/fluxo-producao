@@ -127,7 +127,39 @@ export function closeDb(): void {
   database = null;
 }
 
+function appliedVersions(conn: DatabaseSync): Set<number> {
+  const rows = conn.prepare('SELECT version FROM schema_migrations').all() as Array<{ version: number }>;
+  return new Set(rows.map((row) => row.version));
+}
+
+function markVersion(conn: DatabaseSync, version: number): void {
+  conn
+    .prepare('INSERT INTO schema_migrations (version, applied_at) VALUES (?, ?)')
+    .run(version, new Date().toISOString());
+}
+
 function migrate(conn: DatabaseSync): void {
+  conn.exec(`
+    CREATE TABLE IF NOT EXISTS schema_migrations (
+      version INTEGER PRIMARY KEY,
+      applied_at TEXT NOT NULL
+    );
+  `);
+  const done = appliedVersions(conn);
+  if (!done.has(1)) {
+    applySchemaV1(conn);
+    markVersion(conn, 1);
+  }
+  if (!done.has(2)) {
+    const columns = conn.prepare('PRAGMA table_info(users)').all() as Array<{ name: string }>;
+    if (!columns.some((column) => column.name === 'updated_at')) {
+      conn.exec('ALTER TABLE users ADD COLUMN updated_at TEXT');
+    }
+    markVersion(conn, 2);
+  }
+}
+
+function applySchemaV1(conn: DatabaseSync): void {
   conn.exec(`
     CREATE TABLE IF NOT EXISTS users (
       id TEXT PRIMARY KEY,
@@ -484,7 +516,7 @@ export function updateAccount(
     .prepare(
       `UPDATE users
        SET name = ?, email = ?, sector_id = ?, password_hash = COALESCE(?, password_hash),
-           pin_hash = COALESCE(?, pin_hash), active = ?
+           pin_hash = COALESCE(?, pin_hash), active = ?, updated_at = ?
        WHERE id = ?`,
     )
     .run(
@@ -494,6 +526,7 @@ export function updateAccount(
       patch.passwordHash ?? null,
       patch.pinHash ?? null,
       patch.active === undefined ? (current.active ? 1 : 0) : patch.active ? 1 : 0,
+      new Date().toISOString(),
       id,
     );
 }

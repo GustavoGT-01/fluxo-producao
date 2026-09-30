@@ -217,11 +217,12 @@ Progresso da OP é `progressBySector` (não um índice `stage`). Setor só inici
 
 ## Documentação extra
 
-- `docs/PLANO-MELHORIA-fluxo-producao.md` — roadmap
+- `docs/PLANO-ATUAL.md` — plano de melhoria do código atual
 - `docs/STACK-fluxo-producao.md` — stack e endpoints
-- `docs/ESTRUTURA-PROJETO-fluxo-producao.md` — arquitetura
+- `docs/ESTRUTURA-PROJETO-fluxo-producao.md` — guia histórico da migração do HTML
+- `docs/PLANO-MELHORIA-fluxo-producao.md` — diagnóstico antigo do protótipo HTML, não do app
 - `apps/api/README.md` — detalhes da API e PINs
-- `docs/prototype/fluxo-producao-diagrama.html` — protótipo original
+- `docs/prototype/fluxo-producao-diagrama.html` — protótipo original, não é o sistema que o `pnpm dev` sobe
 
 ---
 

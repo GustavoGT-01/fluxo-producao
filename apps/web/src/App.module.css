@@ -1,3 +1,14 @@
+.demoNote {
+  margin: 0;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
 .page {
   min-height: 100dvh;
   display: flex;

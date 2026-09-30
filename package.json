@@ -10,6 +10,10 @@
     "test": "pnpm --filter web test && pnpm --filter api test",
     "typecheck": "pnpm --filter web typecheck && pnpm --filter api typecheck",
     "lint": "pnpm --filter web lint",
-    "build": "pnpm --filter web build"
+    "build": "pnpm --filter web build",
+    "e2e": "playwright test -c e2e/playwright.config.ts"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0"
   }
 }

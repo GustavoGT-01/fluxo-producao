@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '@/components/Button';
 import { Drawer } from '@/components/Drawer';
 import { Modal } from '@/components/Modal';
@@ -53,10 +53,33 @@ export function Pauses() {
     [orders],
   );
 
+  const notified = useRef(new Set<string>());
   const newPauses = pauses.filter((p) => p.state === 'new');
   const alertStack = newPauses.slice(0, 3);
   const list =
     filter === 'new' ? pauses.filter((p) => p.state === 'new') : pauses;
+
+  useEffect(() => {
+    if (typeof Notification === 'undefined') return;
+    const stale = pauses.filter((pause) => pause.state !== 'handled' && isPauseStale(pause.at));
+    if (stale.length === 0) return;
+    const show = () => {
+      for (const pause of stale) {
+        if (notified.current.has(pause.id)) continue;
+        notified.current.add(pause.id);
+        const sector = sectorMap.get(pause.sectorId)?.name ?? pause.sectorId;
+        new Notification(`Parada em ${sector}`, {
+          body: `${pause.orderId} · ${pause.reason}`,
+        });
+      }
+    };
+    if (Notification.permission === 'granted') show();
+    else if (Notification.permission === 'default') {
+      void Notification.requestPermission().then((result) => {
+        if (result === 'granted') show();
+      });
+    }
+  }, [pauses, sectorMap]);
 
   useEffect(() => {
     const onOpen = () => {

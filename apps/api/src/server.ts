@@ -44,8 +44,14 @@ import {
   type ProgressCell,
   type UserRecord,
 } from './db';
-import { estimateLeadTime, summarizeSamples, type TimeSample } from './chrono';
-import { canStart, wouldCreateCycle } from './graph';
+import {
+  canStart,
+  estimateLeadTime,
+  summarizeSamples,
+  wouldCreateCycle,
+  type TimeSample,
+} from '@fluxo/shared';
+import { dispatchPauseAlert } from './alert';
 import { addClient, eachClient, removeClient } from './hub';
 import { parsePlanilha } from './planilha';
 import { hashSecret, verifySecret } from './password';
@@ -57,7 +63,12 @@ const REMEMBER_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 const STALE_MS = 15 * 60 * 1000;
 
 function secret(): string {
-  return process.env.AUTH_SECRET ?? 'fluxo-dev-secret-trocar-em-producao';
+  const value = process.env.AUTH_SECRET;
+  if (value) return value;
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('AUTH_SECRET obrigatório em produção');
+  }
+  return 'fluxo-dev-secret-trocar-em-producao';
 }
 
 function publicUser(user: UserRecord) {
@@ -125,14 +136,22 @@ function publishGraph(): void {
 
 export async function buildApp() {
   const app = Fastify({ logger: false });
-  await app.register(helmet, { contentSecurityPolicy: false });
+  await app.register(helmet, {
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'none'"],
+        baseUri: ["'none'"],
+        frameAncestors: ["'none'"],
+      },
+    },
+  });
   await app.register(cors, {
     origin: process.env.CORS_ORIGIN?.split(',') ?? ['http://localhost:5173', 'http://127.0.0.1:5173'],
     credentials: true,
   });
   await app.register(cookie);
   await app.register(multipart, { limits: { fileSize: 2 * 1024 * 1024 } });
-  await app.register(rateLimit, { global: false });
+  await app.register(rateLimit, { global: true, max: 300, timeWindow: '1 minute' });
 
   app.setErrorHandler((error: unknown, _request, reply) => {
     if (error instanceof z.ZodError) {
@@ -500,7 +519,13 @@ export async function buildApp() {
     }
     const order = getOrder(params.id);
     if (!order) return reply.code(404).send({ error: 'Ordem não encontrada' });
+    const sector = listSectors().find((s) => s.id === body.sectorId);
+    if (!sector) return reply.code(404).send({ error: 'Setor não encontrado' });
     const prev = order.progressBySector[body.sectorId];
+    const engaged = prev?.status === 'run' || prev?.status === 'pause' || prev?.status === 'stop';
+    if (!engaged && !canStart(order.progressBySector, sector.deps)) {
+      return reply.code(409).send({ error: 'Pré-requisitos do setor ainda não concluídos' });
+    }
     const nextStatus = body.status ?? 'pause';
     const cell: ProgressCell = {
       sectorId: body.sectorId,
@@ -515,11 +540,19 @@ export async function buildApp() {
       sectorId: body.sectorId,
       reason: body.reason,
       note: body.note,
-      by: `${user.name} · ${listSectors().find((s) => s.id === body.sectorId)?.name ?? body.sectorId}`,
+      by: `${user.name} · ${sector.name}`,
       at: new Date().toISOString(),
       state: 'new',
     };
     insertPause(pause);
+    void dispatchPauseAlert(process.env.ALERT_WEBHOOK_URL, {
+      kind: 'pause.created',
+      pauseId: pause.id,
+      orderId: pause.orderId,
+      sectorId: pause.sectorId,
+      reason: pause.reason,
+      at: pause.at,
+    });
     const saved = getOrder(params.id);
     if (!saved) return reply.code(500).send({ error: 'Falha ao gravar' });
     trackSectorTime(saved, body.sectorId, prev?.status, nextStatus);
@@ -670,16 +703,51 @@ export async function buildApp() {
     return { filename: name, count: parsed.orders.length, errors: [], committed: true };
   });
 
+  app.get('/api/export/orders.csv', async (request, reply) => {
+    const user = requireManager(request, reply);
+    if (!user) return;
+    const cell = (value: string | number | boolean) => {
+      const text = String(value);
+      return /[",\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+    };
+    const lines = ['id,produto,quantidade,lote,cliente,pedido,urgente,prazo'];
+    for (const order of ordersFor('manager', null)) {
+      lines.push(
+        [
+          order.id,
+          order.product,
+          order.quantity,
+          order.batch,
+          order.client,
+          order.orderCode,
+          order.urgent ? 'sim' : 'nao',
+          order.dueDate,
+        ]
+          .map(cell)
+          .join(','),
+      );
+    }
+    reply.header('content-type', 'text/csv; charset=utf-8');
+    reply.header('content-disposition', 'attachment; filename="ordens.csv"');
+    return lines.join('\n');
+  });
+
   return app;
 }
 
 const isMain = import.meta.url === pathToFileURL(process.argv[1] ?? '').href;
 if (isMain) {
+  if (process.env.NODE_ENV === 'production' && !process.env.AUTH_SECRET) {
+    console.error('AUTH_SECRET obrigatório em produção');
+    process.exit(1);
+  }
   const app = await buildApp();
   const port = Number(process.env.PORT ?? 3001);
   await app.listen({ port, host: '0.0.0.0' });
   console.log(`API em http://127.0.0.1:${port}`);
-  console.log(`Gerência: ${DEMO.managerEmail} / ${DEMO.managerPassword}`);
+  if (process.env.NODE_ENV !== 'production') {
+    console.log(`Gerência: ${DEMO.managerEmail} / ${DEMO.managerPassword}`);
+  }
 }
 
 export { DEMO };

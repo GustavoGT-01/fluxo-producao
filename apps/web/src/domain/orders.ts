@@ -1,3 +1,4 @@
+import { canStart as depsDone } from '@fluxo/shared';
 import type { Order, OrderFilters, Sector, Status } from './types';
 
 const ACTIVE: ReadonlySet<Status> = new Set([
@@ -9,9 +10,7 @@ const ACTIVE: ReadonlySet<Status> = new Set([
 
 /** OP só inicia no setor se TODOS os pré-requisitos estiverem concluídos. */
 export function canStart(order: Order, sector: Sector): boolean {
-  return sector.deps.every(
-    (d) => order.progressBySector[d]?.status === 'done',
-  );
+  return depsDone(order.progressBySector, sector.deps);
 }
 
 export function availableSectors(order: Order, sectors: Sector[]): Sector[] {

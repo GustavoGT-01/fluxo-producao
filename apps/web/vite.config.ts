@@ -10,6 +10,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(rootDir, './src'),
+      '@fluxo/shared': path.resolve(rootDir, '../../packages/shared/src/index.ts'),
     },
   },
   test: {

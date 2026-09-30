@@ -148,6 +148,22 @@ test('login da gerência e bloqueio do operador', async () => {
   });
   assert.equal(newPin.statusCode, 200);
 
+  const blockedPause = await app.inject({
+    method: 'POST',
+    url: '/api/orders/OP-4821/pause',
+    headers: { cookie: managerCookie },
+    payload: { sectorId: 'metalurgica', reason: 'Falta de material' },
+  });
+  assert.equal(blockedPause.statusCode, 409);
+
+  const runningPause = await app.inject({
+    method: 'POST',
+    url: '/api/orders/OP-4821/pause',
+    headers: { cookie: managerCookie },
+    payload: { sectorId: 'cnc', reason: 'Falta de material' },
+  });
+  assert.equal(runningPause.statusCode, 200);
+
   await app.close();
 });
 

@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { Order, Pause, SectorProgress } from '@/domain/types';
 import { createDemoOrders } from '@/mocks/orderFactory';
+import { OfflineQueued } from '@/services/api';
 import { isRemoteApply, isSignedIn } from '@/services/authState';
 import { pushPause, pushPauseState, pushProgress } from '@/services/commands';
 import { isPresentation } from '@/services/presentation';
@@ -66,6 +67,10 @@ export const useOrdersStore = create<OrdersState>()((set) => ({
     }));
     if (opts?.sync === false || skipSync()) return;
     void pushProgress(orderId, sectorId, patch).catch((error: unknown) => {
+      if (error instanceof OfflineQueued) {
+        useUiStore.getState().pushToast(error.message);
+        return;
+      }
       useOrdersStore.setState({ orders: snapshot });
       const message = error instanceof Error ? error.message : 'Falha ao gravar progresso';
       useUiStore.getState().pushToast(message);
@@ -103,6 +108,10 @@ export const useOrdersStore = create<OrdersState>()((set) => ({
         }));
       })
       .catch((error: unknown) => {
+        if (error instanceof OfflineQueued) {
+          useUiStore.getState().pushToast(error.message);
+          return;
+        }
         useOrdersStore.setState((s) => ({ pauses: s.pauses.filter((p) => p.id !== localId) }));
         const message = error instanceof Error ? error.message : 'Falha ao gravar pausa';
         useUiStore.getState().pushToast(message);
@@ -115,6 +124,10 @@ export const useOrdersStore = create<OrdersState>()((set) => ({
     }));
     if (skipSync()) return;
     void pushPauseState(id, state).catch((error: unknown) => {
+      if (error instanceof OfflineQueued) {
+        useUiStore.getState().pushToast(error.message);
+        return;
+      }
       useOrdersStore.setState({ pauses: snapshot });
       const message = error instanceof Error ? error.message : 'Falha ao atualizar parada';
       useUiStore.getState().pushToast(message);

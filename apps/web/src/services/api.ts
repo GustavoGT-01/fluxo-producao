@@ -58,7 +58,14 @@ export async function sendJson<T>(path: string, method: string, body: unknown): 
     const items = readOutbox();
     items.push({ path, method, body });
     writeOutbox(items);
-    throw error;
+    throw new OfflineQueued();
+  }
+}
+
+export class OfflineQueued extends Error {
+  constructor() {
+    super('Sem rede. Apontamento na fila.');
+    this.name = 'OfflineQueued';
   }
 }
 
@@ -66,12 +73,14 @@ export async function flushOutbox(): Promise<void> {
   const items = readOutbox();
   if (items.length === 0) return;
   const pending: OutboxItem[] = [];
-  for (const item of items) {
+  for (let index = 0; index < items.length; index += 1) {
+    const item = items[index];
     try {
       await api(item.path, { method: item.method, body: JSON.stringify(item.body) });
     } catch (error) {
       if (error instanceof ApiError) continue;
-      pending.push(item);
+      pending.push(...items.slice(index));
+      break;
     }
   }
   writeOutbox(pending);

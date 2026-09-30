@@ -23,6 +23,11 @@ describe('wouldCreateCycle', () => {
     expect(wouldCreateCycle(sectors, 'B', 'A')).toBe(true);
   });
 
+  it('bloqueia aresta para o mesmo setor', () => {
+    const sectors = [sector('A'), sector('B')];
+    expect(wouldCreateCycle(sectors, 'A', 'A')).toBe(true);
+  });
+
   it('permite aresta nova sem ciclo', () => {
     const sectors = [sector('A'), sector('B'), sector('C', ['A'])];
     expect(wouldCreateCycle(sectors, 'B', 'C')).toBe(false);

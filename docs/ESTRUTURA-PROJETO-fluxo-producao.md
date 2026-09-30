@@ -1,7 +1,10 @@
 # Como Estruturar o Projeto (sem um único HTML)
 
-> Guia para sair do `fluxo-producao-diagrama.html` (HTML + CSS + JS num arquivo só) para um projeto organizado, escalável e testável.
-> Complementa `STACK-fluxo-producao.md` e `PLANO-MELHORIA-fluxo-producao.md`.
+> Guia histórico da saída do HTML único. O repositório já é o monorepo `apps/web` + `apps/api` + `packages/shared`.
+> A regra de negócio vigente está no código (`domain`, `@fluxo/shared`) e em `docs/PLANO-ATUAL.md`, não neste passo a passo.
+
+> Guia original para sair do `fluxo-producao-diagrama.html` (HTML + CSS + JS num arquivo só).
+> Complementa `STACK-fluxo-producao.md`. O plano antigo do protótipo está em `PLANO-MELHORIA-fluxo-producao.md` (histórico).
 
 ---
 

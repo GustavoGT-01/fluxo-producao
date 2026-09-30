@@ -1,5 +1,8 @@
+import { useEffect, useState } from 'react';
 import { STATUSES, STATUS_LABELS, computeBottlenecks } from '@/domain';
 import type { Status } from '@/domain/types';
+import { fetchChronoSummary } from '@/services/api';
+import { isPresentation } from '@/services/presentation';
 import { selectKpiCounts } from '@/store/selectors';
 import { useGraphStore } from '@/store/useGraphStore';
 import { useOrdersStore } from '@/store/useOrdersStore';
@@ -12,7 +15,36 @@ export function Kpis() {
   const filters = useUiStore((s) => s.filters);
   const toggleStatus = useUiStore((s) => s.toggleStatus);
   const counts = selectKpiCounts(orders, filters);
-  const bottleneckId = computeBottlenecks(orders, sectors);
+  const role = useUiStore((s) => s.role);
+  const [pace, setPace] = useState<Record<string, number> | undefined>(undefined);
+  useEffect(() => {
+    if (isPresentation() || role !== 'manager') return;
+    let cancel = false;
+    void fetchChronoSummary()
+      .then(({ summary }) => {
+        if (cancel) return;
+        const grouped = new Map<string, number[]>();
+        for (const row of summary) {
+          const list = grouped.get(row.sectorId) ?? [];
+          list.push(row.medianActiveMs);
+          grouped.set(row.sectorId, list);
+        }
+        const next: Record<string, number> = {};
+        for (const [id, values] of grouped) {
+          const sorted = [...values].sort((a, b) => a - b);
+          next[id] = sorted[Math.floor((sorted.length - 1) / 2)] ?? 0;
+        }
+        setPace(Object.keys(next).length > 0 ? next : undefined);
+      })
+      .catch(() => {
+        if (!cancel) setPace(undefined);
+      });
+    return () => {
+      cancel = true;
+    };
+  }, [role]);
+  const bottleneckId = computeBottlenecks(orders, sectors, pace);
+  const timed = Boolean(pace && Object.values(pace).some((ms) => ms > 0));
   const bottleneck = sectors.find((s) => s.id === bottleneckId);
   const contextOn = Boolean(
     filters.batch || filters.query.trim() || filters.urgentOnly,
@@ -49,6 +81,7 @@ export function Kpis() {
       {bottleneck ? (
         <p className={styles.bottleneck}>
           Gargalo agora: {bottleneck.icon} {bottleneck.name}
+          {timed ? ' · o tempo medido pesa junto com a fila' : ''}
         </p>
       ) : null}
     </>

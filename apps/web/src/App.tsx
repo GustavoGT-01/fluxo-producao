@@ -14,6 +14,7 @@ import { OrdersTable } from '@/features/orders-table';
 import { Pauses } from '@/features/pauses';
 import { Track } from '@/features/track';
 import { UsersPanel } from '@/features/users';
+import { flushOutbox } from '@/services/api';
 import { subscribeProduction } from '@/services/live';
 import { isPresentation } from '@/services/presentation';
 import { startSimulator, stopSimulator } from '@/services/simulator';
@@ -47,6 +48,7 @@ export default function App() {
 
   useEffect(() => {
     void restore();
+    void flushOutbox();
   }, [restore]);
 
   useEffect(() => {
@@ -85,6 +87,11 @@ export default function App() {
   return (
     <div className={styles.page}>
       <Header />
+      {isPresentation() ? (
+        <p className={styles.demoNote} role="status">
+          Modo demonstração. Este quadro é simulado: não grava no servidor e não recebe atualizações ao vivo.
+        </p>
+      ) : null}
       {role === 'operator' ? (
         <OperatorView />
       ) : (

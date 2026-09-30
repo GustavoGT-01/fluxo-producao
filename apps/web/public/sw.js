@@ -2,7 +2,9 @@ const CACHE = 'fluxo-shell-v1';
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE).then((cache) => cache.addAll(['/', '/manifest.webmanifest'])),
+    caches.open(CACHE).then((cache) =>
+      cache.addAll(['/', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon-512.png']),
+    ),
   );
 });
 

@@ -9,3 +9,6 @@ coverage
 *.tsbuildinfo
 .vite
 apps/api/data
+test-results
+playwright-report
+blob-report

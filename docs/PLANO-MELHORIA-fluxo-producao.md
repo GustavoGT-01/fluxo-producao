@@ -1,6 +1,10 @@
 # Plano de Melhoria — Fluxo de Produção
 
-> Base: análise de `fluxo-producao-diagrama.html` (1 arquivo, ~1.100 linhas, Vanilla JS, sem backend).
+> Histórico do protótipo HTML. Não descreve o sistema atual.
+> O monorepo (React + API + SQLite) já entregou grafo, sessão, importação, cronoanálise e SSE.
+> Plano vigente: `docs/PLANO-ATUAL.md`.
+
+> Base original: análise de `fluxo-producao-diagrama.html` (1 arquivo, ~1.100 linhas, Vanilla JS, sem backend).
 > Complementa o documento `STACK-fluxo-producao.md`.
 
 ---

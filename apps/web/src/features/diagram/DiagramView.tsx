@@ -1,5 +1,6 @@
 import {
   useCallback,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -10,8 +11,9 @@ import { Button } from '@/components/Button';
 import { Modal } from '@/components/Modal';
 import { isIndependent } from '@/domain/graph';
 import type { Order, Sector } from '@/domain/types';
-import { OPERATORS } from '@/mocks/catalog';
+import { fetchUsers } from '@/services/api';
 import { selectIndependentSectors } from '@/store/selectors';
+import { useSessionStore } from '@/store/useSessionStore';
 import { useGraphStore } from '@/store/useGraphStore';
 import { useOrdersStore } from '@/store/useOrdersStore';
 import { useUiStore } from '@/store/useUiStore';
@@ -76,6 +78,38 @@ export function DiagramView() {
   const [configId, setConfigId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
   const [zoom, setZoom] = useState(1);
+  const [operatorBySector, setOperatorBySector] = useState<Record<string, string>>({});
+  const sessionRole = useSessionStore((s) => s.user?.role);
+  const scrollerRef = useRef<HTMLDivElement>(null);
+  const panDrag = useRef<{
+    id: number;
+    x: number;
+    y: number;
+    left: number;
+    top: number;
+  } | null>(null);
+
+  useEffect(() => {
+    if (sessionRole !== 'manager') return;
+    let cancel = false;
+    void fetchUsers()
+      .then(({ users }) => {
+        if (cancel) return;
+        const next: Record<string, string> = {};
+        for (const user of users) {
+          if (user.role === 'operator' && user.sectorId && user.active) {
+            next[user.sectorId] = user.name;
+          }
+        }
+        setOperatorBySector(next);
+      })
+      .catch(() => {
+        if (!cancel) setOperatorBySector({});
+      });
+    return () => {
+      cancel = true;
+    };
+  }, [sessionRole]);
 
   const dragRef = useRef<{
     id: string;
@@ -270,7 +304,37 @@ export function DiagramView() {
         </div>
       </div>
 
-      <div className={styles.canvas}>
+      <div
+        ref={scrollerRef}
+        className={styles.canvas}
+        onPointerDown={(event) => {
+          const target = event.target as HTMLElement;
+          if (target.closest('[data-node]')) return;
+          const scroller = scrollerRef.current;
+          if (!scroller) return;
+          panDrag.current = {
+            id: event.pointerId,
+            x: event.clientX,
+            y: event.clientY,
+            left: scroller.scrollLeft,
+            top: scroller.scrollTop,
+          };
+          scroller.setPointerCapture(event.pointerId);
+        }}
+        onPointerMove={(event) => {
+          const drag = panDrag.current;
+          const scroller = scrollerRef.current;
+          if (!drag || drag.id !== event.pointerId || !scroller) return;
+          scroller.scrollLeft = drag.left - (event.clientX - drag.x);
+          scroller.scrollTop = drag.top - (event.clientY - drag.y);
+        }}
+        onPointerUp={() => {
+          panDrag.current = null;
+        }}
+        onPointerCancel={() => {
+          panDrag.current = null;
+        }}
+      >
         <div style={{ width: canvasW * zoom, height: canvasH * zoom }}>
         <div
           className={styles.canvasInner}
@@ -338,7 +402,7 @@ export function DiagramView() {
           </svg>
 
           <div className={styles.nodes}>
-            {sectors.map((sector, index) => {
+            {sectors.map((sector) => {
               const indep = isIndependent(sector);
               const counts = countByStatus(orders, sector.id);
               const selected = focusId === sector.id;
@@ -355,6 +419,7 @@ export function DiagramView() {
                 <div
                   key={sector.id}
                   role="button"
+                  data-node=""
                   className={nodeClass}
                   style={{
                     left: sector.pos.x,
@@ -415,7 +480,7 @@ export function DiagramView() {
                   </div>
 
                   <div className={styles.nodeMeta}>
-                    <span>Op.: {OPERATORS[index] ?? '—'}</span>
+                    <span>Op.: {operatorBySector[sector.id] ?? '—'}</span>
                     <span>·</span>
                     <span>{counts.total} ordens</span>
                   </div>
@@ -457,6 +522,32 @@ export function DiagramView() {
         </div>
         </div>
       </div>
+
+      <button
+        type="button"
+        className={styles.map}
+        aria-label="Mover a vista pelo mapa do diagrama"
+        onClick={(event) => {
+          const scroller = scrollerRef.current;
+          if (!scroller) return;
+          const rect = event.currentTarget.getBoundingClientRect();
+          const rx = (event.clientX - rect.left) / rect.width;
+          const ry = (event.clientY - rect.top) / rect.height;
+          scroller.scrollLeft = Math.max(0, rx * (scroller.scrollWidth - scroller.clientWidth));
+          scroller.scrollTop = Math.max(0, ry * (scroller.scrollHeight - scroller.clientHeight));
+        }}
+      >
+        {sectors.map((sector) => (
+          <span
+            key={sector.id}
+            className={styles.mapDot}
+            style={{
+              left: `${(sector.pos.x / canvasW) * 100}%`,
+              top: `${(sector.pos.y / canvasH) * 100}%`,
+            }}
+          />
+        ))}
+      </button>
 
       <div className={styles.legend}>
         <span>

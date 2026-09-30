@@ -8,9 +8,10 @@
     "dev:demo": "tsx watch src/server.ts",
     "start": "tsx src/server.ts",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test src/auth.test.ts src/chrono.test.ts"
+    "test": "tsx --test src/auth.test.ts src/chrono.test.ts src/migrate.test.ts src/alert.test.ts"
   },
   "dependencies": {
+    "@fluxo/shared": "workspace:*",
     "@fastify/cookie": "^11.0.2",
     "@fastify/cors": "^11.0.1",
     "@fastify/helmet": "^13.0.1",
